@@ -3,11 +3,13 @@ import React from "react";
 export default function Page() {
   return (
     <div>
+      <div style={{ textAlign: "center" }}>
       <p className="text-blue-600 text-6xl">Student Housing BV</p>
       <p>Welcome to Student Housing BV!</p>
-      <p className="text-red-600 font-bold" style={{ textAlign: "center" }}>
+      <p className="text-red-600 font-bold">
         Urgent Announcements
       </p>
+      </div>
 
       <nav className="flex flex-col gap-2 mt-4">
         <ul>
