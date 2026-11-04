@@ -1,5 +1,9 @@
 import React from "react";
 
 export default function page() {
-  return <div>This is the admin calendar page</div>;
+  return (
+    <div>
+      <p>Another test for calendar page</p>
+    </div>
+  );
 }
