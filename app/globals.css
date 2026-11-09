@@ -1,1 +1,6 @@
 @import "tailwindcss";
+
+/* 1. Tell Tailwind to use your Next.js font variable for font-sans */
+@theme {
+  --font-sans: var(--font-amiko), sans-serif;
+}
