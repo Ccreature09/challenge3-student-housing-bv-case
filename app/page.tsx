@@ -26,7 +26,7 @@ export default function Page() {
 
       {/* Navigation */}
       <nav className="flex justify-center mt-8">
-        <ul className="flex flex-col gap-4">
+        <ul className="flex flex-col bg-amber-300 w-1/4 gap-4">
           <li>
             <a href="/homepage">Home</a>
           </li>
@@ -55,6 +55,9 @@ export default function Page() {
             <a href="/homepage/Logout">Logout</a>
           </li>
         </ul>
+        <div className="flex w-3/4">
+          <p>options</p>
+        </div>
       </nav>
     </div>
   );
