@@ -18,7 +18,7 @@ export default function Page() {
         <div className="flex gap-1 flex-wrap justify-center">
           {/* Repairs box */}
           <Link
-            href="/tenant-dashboard/nofnp/maintenence"
+            href="/tenant-dashboard/nofnp/maintenance"
             className="group relative block bg-blue-400 h-70 w-70 mx-auto overflow-hidden rounded-lg m-4"
           >
             <img

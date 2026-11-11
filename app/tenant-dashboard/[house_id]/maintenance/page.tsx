@@ -1,32 +1,55 @@
 import Link from "next/link";
 import { Suspense } from "react";
+
+import { AppSidebar } from "@/components/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+
 type PageProps = {
   params: Promise<{ house_id: string }>;
 };
 
-async function MaintenanceContent({ params }: PageProps) {
+async function MaintenanceLinks({ params }: PageProps) {
   const { house_id } = await params;
+  const base = `/tenant-dashboard/${house_id}/maintenance`;
 
-  return <p>House: {house_id}</p>;
+  return (
+    <div className="flex flex-col items-center gap-6 px-6 py-16 text-center">
+      <Link
+        href={`${base}/myrequests`}
+        className="rounded-xl border border-sky-500 px-6 py-5 text-3xl text-sky-500 transition hover:bg-sky-50 md:text-5xl"
+      >
+        My requests
+      </Link>
+
+      <Link
+        href={`${base}/report`}
+        className="rounded-xl border border-sky-500 px-6 py-5 text-3xl text-sky-500 transition hover:bg-sky-50 md:text-5xl"
+      >
+        Report a problem
+      </Link>
+    </div>
+  );
 }
 
 export default function Page({ params }: PageProps) {
   return (
-    <main className="flex flex-col gap-12 mx-auto ">
-      <div className="flex mt-24 p-5 border-2 ">
-        <Link href={"/tenant-dashboard/df/maintenance/requests"}>
-          <p>Requests</p>
-        </Link>
-      </div>
-      <div className="flex mt-24 p-5 border-2 ">
-        <Link href={"/tenant-dashboard/df/maintenance/requests"}>
-          <p>Report a problem</p>
-        </Link>
-      </div>
+    <SidebarProvider>
+      <AppSidebar />
 
-      {/* <Suspense fallback={<p>Loading house details...</p>}>
-        <MaintenanceContent params={params} />
-      </Suspense> */}
-    </main>
+      <SidebarInset>
+        <header className="flex h-14 items-center gap-5 border-b px-10">
+          <SidebarTrigger />
+          <h1 className="font-semibold">Maintenance &amp; Repairs</h1>
+        </header>
+
+        <Suspense fallback={<p className="p-6">Loading maintenance links…</p>}>
+          <MaintenanceLinks params={params} />
+        </Suspense>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
