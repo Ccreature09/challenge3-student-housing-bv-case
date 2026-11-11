@@ -18,7 +18,7 @@ export default function Page({ params }: PageProps) {
           <p>Requests</p>
         </Link>
       </div>
-      <div className="flex mt-24 p-12 border-2 ">
+      <div className="flex mt-24 p-5 border-2 ">
         <Link href={"/tenant-dashboard/df/maintenance/requests"}>
           <p>Report a problem</p>
         </Link>
