@@ -13,7 +13,7 @@ async function MaintenanceContent({ params }: PageProps) {
 export default function Page({ params }: PageProps) {
   return (
     <main className="flex flex-col gap-12 mx-auto ">
-      <div className="flex mt-24 p-12 border-2 ">
+      <div className="flex mt-24 p-5 border-2 ">
         <Link href={"/tenant-dashboard/df/maintenance/requests"}>
           <p>Requests</p>
         </Link>
