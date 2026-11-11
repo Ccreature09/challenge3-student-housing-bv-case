@@ -1,5 +1,5 @@
+import Link from "next/link";
 import "./globals.css";
-
 export default function Page() {
   return (
     <div className="min-h-screen">
@@ -17,8 +17,8 @@ export default function Page() {
 
         <div className="flex gap-1 flex-wrap justify-center">
           {/* Repairs box */}
-          <a
-            href="/home/repairs"
+          <Link
+            href="/tenant-dashboard/nofnp/maintenence"
             className="group relative block bg-blue-400 h-70 w-70 mx-auto overflow-hidden rounded-lg m-4"
           >
             <img
@@ -44,7 +44,7 @@ export default function Page() {
                 </div>
               </div>
             </div>
-          </a>
+          </Link>
 
           {/* Cleaning box */}
           <a
@@ -107,51 +107,6 @@ export default function Page() {
           </a>
         </div>
       </main>
-
-      {/* Buttons */}
-      <div className="flex gap-4 justify-center my-6">
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Button
-        </button>
-
-        <button className="btn btn-blue">Button</button>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex justify-center mt-8">
-        <ul className="flex flex-col bg-amber-300 w-1/4 gap-4">
-          <li>
-            <a href="/homepage">Home</a>
-          </li>
-
-          <li>
-            <a href="/homepage/about">About</a>
-          </li>
-
-          <li>
-            <a href="/homepage/repairs">Repairs</a>
-          </li>
-
-          <li>
-            <a href="/homepage/complaints">Complaints</a>
-          </li>
-
-          <li>
-            <a href="/homepage/maintenance">Maintenance</a>
-          </li>
-
-          <li>
-            <a href="/homepage/account">Account</a>
-          </li>
-
-          <li>
-            <a href="/homepage/Logout">Logout</a>
-          </li>
-        </ul>
-        <div className="flex w-3/4">
-          <p>options</p>
-        </div>
-      </nav>
     </div>
   );
 }
