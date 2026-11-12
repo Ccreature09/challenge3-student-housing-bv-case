@@ -17,17 +17,17 @@ async function MaintenanceLinks({ params }: PageProps) {
   const base = `/tenant-dashboard/${house_id}/maintenance`;
 
   return (
-    <div className="flex flex-col items-center gap-6 px-6 py-16 text-center">
+    <div className="flex flex-col items-center gap-6 px-6 py-50 text-center">
       <Link
         href={`${base}/myrequests`}
-        className="rounded-xl border border-sky-500 px-6 py-5 text-3xl text-sky-500 transition hover:bg-sky-50 md:text-5xl"
+        className="rounded-xl border border-sky-500 px-6 py-5 text-7xl text-sky-500 transition hover:bg-sky-50 md:text-7xl"
       >
         My requests
       </Link>
 
       <Link
         href={`${base}/report`}
-        className="rounded-xl border border-sky-500 px-6 py-5 text-3xl text-sky-500 transition hover:bg-sky-50 md:text-5xl"
+        className="rounded-xl border border-sky-500 px-6 py-5 text-7xl text-sky-500 transition hover:bg-sky-50 md:text-7xl"
       >
         Report a problem
       </Link>
