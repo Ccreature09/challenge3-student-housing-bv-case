@@ -5,12 +5,22 @@ export default function Home() {
     <div className="flex min-h-screen">
 
       {/* Sidebar */}
-      <aside className="w-60 shrink-0 bg-white">
+      <aside className="w-60 shrink-0 bg-blue-400 text-white font-bold">
         <nav className="flex flex-col gap-1 p-2 font-sans text-base">
 
           <div
             role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-gray-100"
+            className="flex items-center w-full rounded-lg p-3 hover:bg-blue-800"
+          >
+            <div className="mr-4 grid place-items-center">
+              {/* Dashboard SVG goes here */}
+            </div>
+            <img src="/images/sidelogo.png" alt="logo" width="40" height="40" className="rounded-3xl"/>
+          </div>
+
+          <div
+            role="button"
+            className="flex items-center w-full rounded-lg p-3 hover:bg-blue-800"
           >
             <div className="mr-4 grid place-items-center">
               {/* Dashboard SVG goes here */}
@@ -20,7 +30,7 @@ export default function Home() {
 
           <div
             role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-gray-100"
+            className="flex items-center w-full rounded-lg p-3 hover:bg-blue-800"
           >
             <div className="mr-4 grid place-items-center">
               {/* E-Commerce SVG goes here */}
@@ -30,7 +40,7 @@ export default function Home() {
 
           <div
             role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-gray-100"
+            className="flex items-center w-full rounded-lg p-3 hover:bg-blue-800"
           >
             <div className="mr-4 grid place-items-center">
               {/* Inbox SVG goes here */}
@@ -40,7 +50,7 @@ export default function Home() {
 
           <div
             role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-gray-100"
+            className="flex items-center w-full rounded-lg p-3 hover:bg-blue-800"
           >
             <div className="mr-4 grid place-items-center">
               {/* Settings SVG goes here */}
@@ -50,7 +60,7 @@ export default function Home() {
 
           <div
             role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-gray-100"
+            className="flex items-center w-full rounded-lg p-3 hover:bg-blue-800"
           >
             <div className="mr-4 grid place-items-center">
               {/* Log Out SVG goes here */}
@@ -64,21 +74,18 @@ export default function Home() {
       {/* Main content */}
       <main className="min-h-screen flex-1 p-8">
 
-        <div className="py-8 text-center">
-          <h1 className="text-xl font-bold text-blue-800 sm:text-4xl text-center">
-            Welcome to Student Housing BV
-          </h1>
-          <p>Student Housing Management Platform</p>
+        <div className="text-center">
+          <img src="/images/lightlogo.png" alt="logo" width="400" height="300"/><p>Your ideal Housing Management Platform</p>
         </div>
 
-    <main className="flex min-h-screen flex-col items-center justify-between p-10">
+    <main className="flex min-h-screen flex-col items-center justify-between p-18">
   
 
     <div className ="flex gap-1 flex-wrap justify-center">
       {/* Repairs box */}
       <a
         href="/home/repairs"
-        className="group relative block bg-blue-400 h-70 w-70 mx-auto overflow-hidden rounded-lg m-4"
+        className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
       >
 
         <img
@@ -112,7 +119,7 @@ export default function Home() {
       {/* Cleaning box */}
       <a
         href="/home/cleaning"
-        className="group relative block bg-blue-400 h-70 w-70 mx-auto overflow-hidden rounded-lg m-4"
+        className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
       >
         <img
           alt="Cleaning schedule"
@@ -143,7 +150,7 @@ export default function Home() {
 
       <a
         href="/home/cleaning"
-        className="group relative block bg-blue-400 h-70 w-70 mx-auto overflow-hidden rounded-lg m-4"
+        className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
       >
         <img
           alt="Announcements and Events"
@@ -174,7 +181,7 @@ export default function Home() {
 
       <a
         href="/home/cleaning"
-        className="group relative block bg-blue-400 h-70 w-70 mx-auto overflow-hidden rounded-lg m-4"
+        className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
       >
         <img
           alt="Shared Inventory"
@@ -205,7 +212,7 @@ export default function Home() {
 
             <a
         href="/home/cleaning"
-        className="group relative block bg-blue-400 h-70 w-70 mx-auto overflow-hidden rounded-lg m-4"
+        className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
       >
         <img
           alt="Shopping List"
@@ -235,7 +242,7 @@ export default function Home() {
 
             <a
         href="/home/cleaning"
-        className="group relative block bg-blue-400 h-70 w-70 mx-auto overflow-hidden rounded-lg m-4"
+        className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
       >
         <img
           alt="Complaints"
