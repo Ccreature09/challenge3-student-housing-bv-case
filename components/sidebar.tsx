@@ -1,14 +1,20 @@
 "use client";
 
 import * as React from "react";
+import { useParams, usePathname } from "next/navigation";
 import {
   Calendar,
   ChevronUp,
   Home,
   Inbox,
+  LayoutDashboard,
+  Megaphone,
   Search,
   Settings,
+  Sparkles,
   User2,
+  Users,
+  Wrench,
 } from "lucide-react";
 
 import {
@@ -44,6 +50,64 @@ const navItems = [
   { title: "Settings", url: "#", icon: Settings },
 ];
 
+function landlordNavItems(adminId: string) {
+  const base = `/admin-dashboard/${adminId}`;
+  return [
+    { title: "Dashboard", url: base, icon: LayoutDashboard },
+    { title: "Calendar", url: `${base}/calendar`, icon: Calendar },
+    { title: "Cleaning schedule", url: `${base}/cleaning-schedule`, icon: Sparkles },
+    { title: "Maintenance and repairs", url: `${base}/maintenence`, icon: Wrench },
+    { title: "Announcements", url: `${base}/announcements`, icon: Megaphone },
+    { title: "Tenants", url: `${base}/tenants`, icon: Users },
+  ];
+}
+
+function tenantNavItems(houseId: string) {
+  const base = `/tenant-dashboard/${houseId}`;
+  return [
+    { title: "Home", url: "#", icon: Home },
+    { title: "Inbox", url: "#", icon: Inbox },
+    { title: "Cleaning schedule", url: `${base}/cleaning-schedule`, icon: Sparkles },
+    { title: "Maintenance", url: `${base}/maintenance`, icon: Wrench },
+    { title: "Settings", url: "#", icon: Settings },
+  ];
+}
+
+// Reading the URL must happen inside <Suspense> because cacheComponents is enabled.
+function RoleLabel() {
+  const adminId = useParams<{ "admin-id"?: string }>()["admin-id"];
+  if (!adminId) return null;
+  return <span className="text-xs text-muted-foreground">Landlord</span>;
+}
+
+function NavItems() {
+  const pathname = usePathname();
+  const params = useParams<{ "admin-id"?: string; house_id?: string }>();
+  const adminId = params["admin-id"];
+  const houseId = params.house_id;
+  const items = adminId
+    ? landlordNavItems(adminId)
+    : houseId
+      ? tenantNavItems(houseId)
+      : navItems;
+
+  return items.map((item) => (
+    <SidebarMenuItem key={item.title}>
+      <SidebarMenuButton
+        tooltip={item.title}
+        isActive={
+          pathname === item.url ||
+          (item.url.split("/").length > 3 && pathname.startsWith(`${item.url}/`))
+        }
+        render={<a href={item.url} />}
+      >
+        <item.icon />
+        <span>{item.title}</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  ));
+}
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -57,6 +121,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
                 <span className="font-semibold">Student Housing BV</span>
+                <React.Suspense fallback={null}>
+                  <RoleLabel />
+                </React.Suspense>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -69,17 +136,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    tooltip={item.title}
-                    render={<a href={item.url} />}
-                  >
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <React.Suspense fallback={null}>
+                <NavItems />
+              </React.Suspense>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
