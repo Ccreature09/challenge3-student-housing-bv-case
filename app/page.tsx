@@ -3,81 +3,10 @@ import "./globals.css";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen">
-
-      {/* Sidebar */}
-      <aside className="w-60 shrink-0 bg-white">
-        <nav className="flex flex-col gap-1 p-2 font-sans text-base">
-
-          <div
-            role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-gray-100"
-          >
-            <div className="mr-4 grid place-items-center">
-              {/* Dashboard SVG goes here */}
-            </div>
-            Home
-          </div>
-
-          <div
-            role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-gray-100"
-          >
-            <div className="mr-4 grid place-items-center">
-              {/* E-Commerce SVG goes here */}
-            </div>
-            E-Commerce
-          </div>
-
-          <div
-            role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-gray-100"
-          >
-            <div className="mr-4 grid place-items-center">
-              {/* Inbox SVG goes here */}
-            </div>
-            Inbox
-
-            <span className="ml-auto rounded-full bg-gray-200 px-2 py-1 text-xs">
-              14
-            </span>
-          </div>
-
-          <div
-            role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-gray-100"
-          >
-            <div className="mr-4 grid place-items-center">
-              {/* Profile SVG goes here */}
-            </div>
-            Profile
-          </div>
-
-          <div
-            role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-gray-100"
-          >
-            <div className="mr-4 grid place-items-center">
-              {/* Settings SVG goes here */}
-            </div>
-            Settings
-          </div>
-
-          <div
-            role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-gray-100"
-          >
-            <div className="mr-4 grid place-items-center">
-              {/* Log Out SVG goes here */}
-            </div>
-            Log Out
-          </div>
-
-        </nav>
-      </aside>
+    <div className="flex min-h-screen"> 
 
       {/* Main content */}
-      <main className="min-h-screen flex-1 p-8">
+      <main className="min-h-screen flex p-8">
 
         <div className="py-8 text-center">
           <h1 className="text-xl font-bold text-blue-800 sm:text-4xl center">
@@ -97,7 +26,7 @@ export default function Home() {
     <div className ="flex gap-1 flex-wrap justify-center">
       {/* Repairs box */}
       <a
-        href="/home/repairs"
+        href="/tenant-dashboard/sfv/maintenance"
         className="group relative block bg-blue-400 h-70 w-70 mx-auto overflow-hidden rounded-lg m-4"
       >
 
