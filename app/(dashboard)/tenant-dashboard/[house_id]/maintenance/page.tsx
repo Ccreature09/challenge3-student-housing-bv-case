@@ -88,7 +88,7 @@ export default function MaintenancePage() {
   return (
     <div>
       <div className={"flex " + line}>
-        <div className="flex w-[36%] items-center justify-center border-r-4 border-sky-300 px-8 py-10">
+        <div className="flex w-[36%] items-center justify-center border-r border-sky-300 px-8 py-10">
           <h1 className="text-2xl font-bold uppercase text-sky-900">
             {view === "requests" ? "My requests" : "Report a problem"}
           </h1>
@@ -175,7 +175,6 @@ export default function MaintenancePage() {
 
       {view === "report" && (
         <form onSubmit={handleSubmit} className="flex items-start gap-10 px-10 py-8">
-          {/* Левая колонка: поля формы */}
           <div className="flex flex-1 flex-col gap-6">
             <div className="flex max-w-xl flex-col gap-2">
               <label htmlFor="title" className="text-sm font-semibold text-sky-900">
@@ -192,7 +191,7 @@ export default function MaintenancePage() {
                 id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Room 12, Kitchen, Hallway 2nd floor"
+                placeholder="e.g. Room 12, Kitchen"
                 className={fieldStyle}
               />
             </div>
