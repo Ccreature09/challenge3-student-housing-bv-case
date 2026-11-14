@@ -91,7 +91,7 @@ export default function Home() {
         <img
           alt="Repairs and maintenance"
           src="/images/repairs.png"
-          className="absolute inset-0 h-35 w-35 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
+          className="absolute inset-0 h-25 w-25 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
         />
 
 
@@ -124,7 +124,7 @@ export default function Home() {
         <img
           alt="Cleaning schedule"
           src="/images/cleaning.png"
-          className="absolute inset-0 h-40 w-40 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
+          className="absolute inset-0 h-30 w-30 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
         />
 
         <div className="relative p-4 sm:p-6 lg:p-8">
@@ -155,7 +155,7 @@ export default function Home() {
         <img
           alt="Announcements and Events"
           src="/images/announcements.png"
-          className="absolute inset-0 h-40 w-40 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
+          className="absolute inset-0 h-30 w-30 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
         />
 
         <div className="relative p-4 sm:p-6 lg:p-8">
@@ -186,7 +186,7 @@ export default function Home() {
         <img
           alt="Shared Inventory"
           src="/images/inventory.png"
-          className="absolute inset-0 h-30 w-30 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
+          className="absolute inset-0 h-25 w-25 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
         />
 
         <div className="relative p-4 sm:p-6 lg:p-8">
@@ -217,7 +217,7 @@ export default function Home() {
         <img
           alt="Shopping List"
           src="/images/shopping.png"
-          className="absolute inset-0 h-40 w-40 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
+          className="absolute inset-0 h-30 w-30 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
         />
 
         <div className="relative p-4 sm:p-6 lg:p-8">
@@ -247,7 +247,7 @@ export default function Home() {
         <img
           alt="Complaints"
           src="/images/complaints.svg"
-          className="absolute inset-0 h-30 w-30 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
+          className="absolute inset-0 h-25 w-25 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
         />
 
         <div className="relative p-4 sm:p-6 lg:p-8">
