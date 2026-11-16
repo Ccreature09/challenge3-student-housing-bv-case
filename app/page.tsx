@@ -1,4 +1,6 @@
+import Link from "next/link";
 import "./globals.css";
+
 
 export default function Home() {
   return (
@@ -72,7 +74,7 @@ export default function Home() {
       </aside>
 
       {/* Main content */}
-      <main className="min-h-screen flex-1 p-8">
+      <main className="min-h-screen flex-1 p-20">
 
         <div className="text-center">
           <img src="/images/lightlogo.png" alt="logo" width="400" height="300"/><p>Your ideal Housing Management Platform</p>
@@ -84,7 +86,7 @@ export default function Home() {
     <div className ="flex gap-1 flex-wrap justify-center">
       {/* Repairs box */}
       <a
-        href="/home/repairs"
+        href="/tenant-dashboard/maintenance"
         className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
       >
 
@@ -149,7 +151,7 @@ export default function Home() {
 
 
       <a
-        href="/home/cleaning"
+        href="/home/cleaning-schedule"
         className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
       >
         <img
@@ -179,8 +181,8 @@ export default function Home() {
 
 
 
-      <a
-        href="/home/cleaning"
+      <Link
+        href="/tenant-dashboard/1/cleaning-schedule"
         className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
       >
         <img
@@ -206,42 +208,44 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </a>
+      </Link>
 
 
 
-            <a
-        href="/home/cleaning"
-        className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
-      >
-        <img
-          alt="Shopping List"
-          src="/images/shopping.png"
-          className="absolute inset-0 h-30 w-30 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
-        />
+              
+          <Link
+            href="/cleaning-schedule"
+            className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
+          >
+            <img
+              alt="Shopping List"
+              src="/images/shopping.png"
+              className="absolute inset-0 h-30 w-30 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
+            />
 
-        <div className="relative p-4 sm:p-6 lg:p-8">
-          <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-            Refurbishing supplies
-          </p>
-
-          <p className="text-xl font-bold text-white sm:text-2xl">
-            Shopping List
-          </p>
-
-          <div className="mt-32">
-            <div className="translate-y-8 transform opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-              <p className="text-sm text-white">
-                View stock level of shared items and add items to shopping list if running low.
+            <div className="relative p-4 sm:p-6 lg:p-8">
+              <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
+                Refurbishing supplies
               </p>
+
+              <p className="text-xl font-bold text-white sm:text-2xl">
+                Shopping List
+              </p>
+
+              <div className="mt-32">
+                <div className="translate-y-8 transform opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
+                  <p className="text-sm text-white">
+                    View stock level of shared items and add items to shopping list if running low.
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </a>
+          </Link>
 
 
-            <a
-        href="/home/cleaning"
+
+            <Link
+        href=""
         className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
       >
         <img
@@ -267,7 +271,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </a>
+      </Link>
     </div>
     </main>
     </main>
