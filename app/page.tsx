@@ -86,7 +86,7 @@ export default function Home() {
     <div className ="flex gap-1 flex-wrap justify-center">
       {/* Repairs box */}
       <a
-        href="/home/repairs"
+        href="/tenant-dashboard/maintenance"
         className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
       >
 
