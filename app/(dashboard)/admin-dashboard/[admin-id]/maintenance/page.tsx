@@ -26,45 +26,11 @@ const fieldStyle = [
   "outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-200",
 ].join(" ")
 
-// Тестовые данные. Позже их нужно заменить на данные из базы или API
-const initialRequests: Request[] = [
-  {
-    id: 213,
-    title: "Loose cabinet door",
-    location: "Kitchen",
-    tenant: "V. L.",
-    submitted: "5 Nov",
-    description: "The door hangs off one hinge.",
-    status: "In progress",
-    response: "",
-  },
-  {
-    id: 137,
-    title: "Light out",
-    location: "Hallway, 2nd floor",
-    tenant: "A. K.",
-    submitted: "8 Nov",
-    description: "The light in the hallway does not turn on.",
-    status: "Submitted",
-    response: "",
-  },
-  {
-    id: 98,
-    title: "Leaking tap",
-    location: "Bathroom",
-    tenant: "M. S.",
-    submitted: "1 Nov",
-    description: "The tap drips all the time.",
-    status: "Resolved",
-    response: "Fixed on 3 Nov.",
-  },
-]
 
 export default function AdminPage() {
-  const [requests, setRequests] = useState<Request[]>(initialRequests)
+  const [requests, setRequests] = useState<Request[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
-  // Черновик формы обновления
   const [draftStatus, setDraftStatus] = useState<Status>("Submitted")
   const [draftResponse, setDraftResponse] = useState("")
   const [saved, setSaved] = useState(false)
@@ -96,7 +62,6 @@ export default function AdminPage() {
 
   return (
     <div>
-      {/* Шапка */}
       <div className={"flex items-center justify-between px-10 py-8 " + line}>
         <h1 className="text-2xl font-bold uppercase text-sky-900">
           {selected ? "Request #" + selected.id : "All maintenance requests"}
@@ -113,7 +78,6 @@ export default function AdminPage() {
         )}
       </div>
 
-      {/* Экран 1: список заявок */}
       {!selected && (
         <>
           <div className={"flex flex-wrap gap-6 px-10 py-6 " + line}>
