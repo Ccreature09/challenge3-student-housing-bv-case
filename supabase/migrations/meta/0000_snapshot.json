@@ -1,0 +1,908 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.houses": {
+      "name": "houses",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "street": {
+          "name": "street",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "house_number": {
+          "name": "house_number",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "postal_code": {
+          "name": "postal_code",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "city": {
+          "name": "city",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "square_meters": {
+          "name": "square_meters",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "houses_square_meters_check": {
+          "name": "houses_square_meters_check",
+          "value": "square_meters > (0)::numeric"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": true
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "auth_user_id": {
+          "name": "auth_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone_number": {
+          "name": "phone_number",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "user_role",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'tenant'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "users_auth_user_id_fkey": {
+          "name": "users_auth_user_id_fkey",
+          "tableFrom": "users",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "auth_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_auth_user_id_key": {
+          "columns": [
+            "auth_user_id"
+          ],
+          "nullsNotDistinct": false,
+          "name": "users_auth_user_id_key"
+        },
+        "users_email_key": {
+          "columns": [
+            "email"
+          ],
+          "nullsNotDistinct": false,
+          "name": "users_email_key"
+        },
+        "users_phone_number_key": {
+          "columns": [
+            "phone_number"
+          ],
+          "nullsNotDistinct": false,
+          "name": "users_phone_number_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {
+        "Users can read own profile": {
+          "name": "Users can read own profile",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(auth_user_id = auth.uid())"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.employees": {
+      "name": "employees",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "manager_id": {
+          "name": "manager_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "work_house_id": {
+          "name": "work_house_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_title": {
+          "name": "job_title",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_employees_manager_id": {
+          "name": "idx_employees_manager_id",
+          "columns": [
+            {
+              "expression": "manager_id",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_employees_work_house_id": {
+          "name": "idx_employees_work_house_id",
+          "columns": [
+            {
+              "expression": "work_house_id",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "employees_manager_id_fkey": {
+          "name": "employees_manager_id_fkey",
+          "tableFrom": "employees",
+          "tableTo": "employees",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "manager_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "employees_user_id_fkey": {
+          "name": "employees_user_id_fkey",
+          "tableFrom": "employees",
+          "tableTo": "users",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "employees_work_house_id_fkey": {
+          "name": "employees_work_house_id_fkey",
+          "tableFrom": "employees",
+          "tableTo": "houses",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "work_house_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "employees_user_id_key": {
+          "columns": [
+            "user_id"
+          ],
+          "nullsNotDistinct": false,
+          "name": "employees_user_id_key"
+        }
+      },
+      "checkConstraints": {
+        "employees_not_own_manager": {
+          "name": "employees_not_own_manager",
+          "value": "manager_id IS DISTINCT FROM id"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": true
+    },
+    "public.rooms": {
+      "name": "rooms",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "house_id": {
+          "name": "house_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "room_number": {
+          "name": "room_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "square_meters": {
+          "name": "square_meters",
+          "type": "numeric(6, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "monthly_rent": {
+          "name": "monthly_rent",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_rooms_house_id": {
+          "name": "idx_rooms_house_id",
+          "columns": [
+            {
+              "expression": "house_id",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "rooms_house_id_fkey": {
+          "name": "rooms_house_id_fkey",
+          "tableFrom": "rooms",
+          "tableTo": "houses",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "house_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "rooms_house_room_unique": {
+          "columns": [
+            "house_id",
+            "room_number"
+          ],
+          "nullsNotDistinct": false,
+          "name": "rooms_house_room_unique"
+        }
+      },
+      "checkConstraints": {
+        "rooms_monthly_rent_check": {
+          "name": "rooms_monthly_rent_check",
+          "value": "monthly_rent >= (0)::numeric"
+        },
+        "rooms_square_meters_check": {
+          "name": "rooms_square_meters_check",
+          "value": "square_meters > (0)::numeric"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": true
+    },
+    "public.contracts": {
+      "name": "contracts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "room_id": {
+          "name": "room_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_by_employee_id": {
+          "name": "created_by_employee_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "monthly_rent": {
+          "name": "monthly_rent",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deposit_amount": {
+          "name": "deposit_amount",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "contract_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "signed_at": {
+          "name": "signed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_contracts_created_by": {
+          "name": "idx_contracts_created_by",
+          "columns": [
+            {
+              "expression": "created_by_employee_id",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_contracts_room_id": {
+          "name": "idx_contracts_room_id",
+          "columns": [
+            {
+              "expression": "room_id",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_contracts_tenant_id": {
+          "name": "idx_contracts_tenant_id",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "contracts_created_by_employee_id_fkey": {
+          "name": "contracts_created_by_employee_id_fkey",
+          "tableFrom": "contracts",
+          "tableTo": "employees",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "created_by_employee_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "contracts_room_id_fkey": {
+          "name": "contracts_room_id_fkey",
+          "tableFrom": "contracts",
+          "tableTo": "rooms",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "room_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "contracts_tenant_id_fkey": {
+          "name": "contracts_tenant_id_fkey",
+          "tableFrom": "contracts",
+          "tableTo": "users",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "contracts_dates_valid": {
+          "name": "contracts_dates_valid",
+          "value": "(end_date IS NULL) OR (end_date >= start_date)"
+        },
+        "contracts_deposit_amount_check": {
+          "name": "contracts_deposit_amount_check",
+          "value": "deposit_amount >= (0)::numeric"
+        },
+        "contracts_monthly_rent_check": {
+          "name": "contracts_monthly_rent_check",
+          "value": "monthly_rent >= (0)::numeric"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": true
+    },
+    "public.reviews": {
+      "name": "reviews",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "contract_id": {
+          "name": "contract_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rating": {
+          "name": "rating",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comment": {
+          "name": "comment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "reviews_contract_id_fkey": {
+          "name": "reviews_contract_id_fkey",
+          "tableFrom": "reviews",
+          "tableTo": "contracts",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "contract_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "reviews_contract_id_key": {
+          "columns": [
+            "contract_id"
+          ],
+          "nullsNotDistinct": false,
+          "name": "reviews_contract_id_key"
+        }
+      },
+      "checkConstraints": {
+        "reviews_rating_check": {
+          "name": "reviews_rating_check",
+          "value": "(rating >= 1) AND (rating <= 5)"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": true
+    },
+    "public.warnings": {
+      "name": "warnings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issued_by_employee_id": {
+          "name": "issued_by_employee_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "behavior": {
+          "name": "behavior",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "warning_date": {
+          "name": "warning_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_DATE"
+        }
+      },
+      "indexes": {
+        "idx_warnings_issued_by": {
+          "name": "idx_warnings_issued_by",
+          "columns": [
+            {
+              "expression": "issued_by_employee_id",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_warnings_tenant_id": {
+          "name": "idx_warnings_tenant_id",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "warnings_issued_by_employee_id_fkey": {
+          "name": "warnings_issued_by_employee_id_fkey",
+          "tableFrom": "warnings",
+          "tableTo": "employees",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "issued_by_employee_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "warnings_tenant_id_fkey": {
+          "name": "warnings_tenant_id_fkey",
+          "tableFrom": "warnings",
+          "tableTo": "users",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": true
+    },
+    "public.utility_bills": {
+      "name": "utility_bills",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "house_id": {
+          "name": "house_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "billing_date": {
+          "name": "billing_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gas_cost": {
+          "name": "gas_cost",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "electricity_cost": {
+          "name": "electricity_cost",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_utility_bills_house_id": {
+          "name": "idx_utility_bills_house_id",
+          "columns": [
+            {
+              "expression": "house_id",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "uuid_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "utility_bills_house_id_fkey": {
+          "name": "utility_bills_house_id_fkey",
+          "tableFrom": "utility_bills",
+          "tableTo": "houses",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "house_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "utility_bills_house_month_unique": {
+          "columns": [
+            "house_id",
+            "billing_date"
+          ],
+          "nullsNotDistinct": false,
+          "name": "utility_bills_house_month_unique"
+        }
+      },
+      "checkConstraints": {
+        "utility_bills_electricity_cost_check": {
+          "name": "utility_bills_electricity_cost_check",
+          "value": "electricity_cost >= (0)::numeric"
+        },
+        "utility_bills_first_of_month": {
+          "name": "utility_bills_first_of_month",
+          "value": "billing_date = (date_trunc('month'::text, (billing_date)::timestamp with time zone))::date"
+        },
+        "utility_bills_gas_cost_check": {
+          "name": "utility_bills_gas_cost_check",
+          "value": "gas_cost >= (0)::numeric"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {
+    "public.contract_status": {
+      "name": "contract_status",
+      "values": [
+        "pending",
+        "active",
+        "ended",
+        "cancelled"
+      ],
+      "schema": "public"
+    },
+    "public.user_role": {
+      "name": "user_role",
+      "values": [
+        "tenant",
+        "staff",
+        "admin"
+      ],
+      "schema": "public"
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {}
+  }
+}
