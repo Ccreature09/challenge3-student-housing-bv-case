@@ -51,9 +51,7 @@ export default function Home() {
                 </p>
 
                 <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  Fill in the form to report any maintenance requests or
-                  repairs which need to be addressed, and our team will
-                  promptly respond.
+                  Fill in the form to report any maintenance requests or repairs which need to be addressed, and our team will promptly respond.
                 </p>
               </div>
             </Link>
@@ -79,8 +77,7 @@ export default function Home() {
                 </p>
 
                 <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  Schedule which flatmates are responsible for cleaning
-                  common areas and when.
+                  Schedule which flatmates are responsible for cleaning common areas and when.
                 </p>
               </div>
             </Link>
@@ -191,7 +188,6 @@ export default function Home() {
                 </p>
               </div>
             </Link>
-
           </div>
         </main>
       </div>
