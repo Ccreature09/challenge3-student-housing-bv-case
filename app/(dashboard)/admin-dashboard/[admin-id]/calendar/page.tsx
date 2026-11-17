@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { MonthGrid, MonthNav, statusText } from "@/components/month-calendar";
+import { getAdminCleaningData } from "@/app/actions/cleaning";
 import {
-  buildings,
   calendarEntries,
   toISODate,
   type CalendarCategory,
   type CalendarEntry,
+  type CleaningTask,
 } from "@/lib/cleaning-data";
 
 const categories: { id: CalendarCategory; label: string }[] = [
@@ -21,7 +22,10 @@ const categories: { id: CalendarCategory; label: string }[] = [
 
 function LandlordCalendarPageContent() {
   const params = useParams<{ "admin-id": string }>();
-  const base = `/admin-dashboard/${params["admin-id"]}`;
+  const adminId = params["admin-id"];
+  const base = `/admin-dashboard/${adminId}`;
+  const [data, setData] = useState<Awaited<ReturnType<typeof getAdminCleaningData>> | null>(null);
+  const [error, setError] = useState("");
 
   const today = useMemo(() => new Date(), []);
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
@@ -29,15 +33,45 @@ function LandlordCalendarPageContent() {
   const [building, setBuilding] = useState("all");
   const [shown, setShown] = useState<Set<CalendarCategory>>(new Set(categories.map((c) => c.id)));
 
+  const loadData = useCallback(async () => {
+    try {
+      setData(await getAdminCleaningData(adminId));
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Could not load calendar entries.");
+    }
+  }, [adminId]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadData(), 0);
+    return () => window.clearTimeout(timer);
+  }, [loadData]);
+
+  const tasks: CleaningTask[] = (data?.tasks ?? []).map((task) => ({
+    id: task.id,
+    houseId: task.houseId,
+    houseName: task.houseName,
+    spaceId: task.areaId,
+    spaceName: task.areaName,
+    floor: task.floor,
+    roomId: task.roomId,
+    room: `Room ${String(task.roomNumber).padStart(3, "0")}`,
+    title: task.title,
+    description: task.description,
+    due: task.due,
+    status: task.status,
+    note: task.note,
+    remindedAt: task.remindedAt,
+  }));
+  const selectedHouseName = data?.houses.find((house) => house.id === building)?.name;
   const entriesByDate = useMemo(() => {
     const map = new Map<string, CalendarEntry[]>();
-    for (const e of calendarEntries()) {
+    for (const e of calendarEntries(tasks)) {
       if (!shown.has(e.category)) continue;
-      if (building !== "all" && e.building !== building) continue;
+      if (building !== "all" && e.building !== selectedHouseName) continue;
       map.set(e.date, [...(map.get(e.date) ?? []), e]);
     }
     return map;
-  }, [building, shown]);
+  }, [building, selectedHouseName, shown, tasks]);
 
   const selectedEntries = entriesByDate.get(toISODate(selected)) ?? [];
 
@@ -53,14 +87,12 @@ function LandlordCalendarPageContent() {
       <div className="flex items-center justify-between border-b bg-white px-6 py-4">
         <h2 className="text-2xl font-semibold text-stone-900">Calendar</h2>
         <p className="text-sm text-stone-600">
-          Signed in as landlord ·{" "}
-          <Link href="/login" className="font-semibold text-teal-700 underline">
-            Log out
-          </Link>
+          Cleaning tasks are synchronized with your schedule.
         </p>
       </div>
 
       <div className="space-y-4 p-6">
+        {error && <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <MonthNav month={month} today={today} onMonthChange={setMonth} onSelect={setSelected} />
           <div className="flex items-center gap-3">
@@ -72,8 +104,8 @@ function LandlordCalendarPageContent() {
                 onChange={(e) => setBuilding(e.target.value)}
               >
                 <option value="all">All buildings</option>
-                {buildings.map((b) => (
-                  <option key={b}>{b}</option>
+                {(data?.houses ?? []).map((house) => (
+                  <option key={house.id} value={house.id}>{house.name}</option>
                 ))}
               </select>
             </label>

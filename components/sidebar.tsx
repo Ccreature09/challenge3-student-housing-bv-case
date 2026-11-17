@@ -1,7 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { createBrowserClient } from "@supabase/ssr";
 import {
   Calendar,
   ChevronUp,
@@ -109,13 +111,36 @@ function NavItems() {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const router = useRouter();
+  const [authError, setAuthError] = React.useState("");
+
+  async function signOut() {
+    setAuthError("");
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabasePublishableKey =
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    if (!supabaseUrl || !supabasePublishableKey) {
+      setAuthError("Supabase Auth is not configured.");
+      return;
+    }
+
+    const supabase = createBrowserClient(supabaseUrl, supabasePublishableKey);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      setAuthError(error.message);
+      return;
+    }
+    router.replace("/login");
+    router.refresh();
+  }
+
   return (
     <Sidebar collapsible="icon" {...props}>
       {/* Top Header / Brand Logo */}
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<a href="/" />}>
+            <SidebarMenuButton size="lg" render={<Link href="/" />}>
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <Home className="size-4" />
               </div>
@@ -158,13 +183,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 side="top"
                 className="w-[--radix-popper-anchor-width]"
               >
+                {authError && <p role="alert" className="px-2 py-1 text-xs text-red-700">{authError}</p>}
                 <DropdownMenuItem>
                   <span>Account</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <span>Billing</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void signOut()}>
                   <span>Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

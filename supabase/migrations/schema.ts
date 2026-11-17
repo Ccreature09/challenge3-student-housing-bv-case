@@ -1,9 +1,13 @@
-import { pgTable, check, uuid, varchar, numeric, timestamp, foreignKey, unique, pgPolicy, index, date, integer, smallint, text, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, pgSchema, check, uuid, varchar, numeric, timestamp, foreignKey, unique, pgPolicy, index, date, integer, smallint, text, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const contractStatus = pgEnum("contract_status", ['pending', 'active', 'ended', 'cancelled'])
 export const userRole = pgEnum("user_role", ['tenant', 'staff', 'admin'])
+export const cleaningStatus = pgEnum("cleaning_status", ['open', 'done'])
 
+export const usersInAuth = pgSchema("auth").table("users", {
+	id: uuid().primaryKey().notNull(),
+});
 
 export const houses = pgTable("houses", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
@@ -13,7 +17,7 @@ export const houses = pgTable("houses", {
 	city: varchar({ length: 100 }).notNull(),
 	squareMeters: numeric("square_meters", { precision: 8, scale:  2 }),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-}, (table) => [
+}, () => [
 	check("houses_square_meters_check", sql`square_meters > (0)::numeric`),
 ]);
 
@@ -29,7 +33,7 @@ export const users = pgTable("users", {
 }, (table) => [
 	foreignKey({
 			columns: [table.authUserId],
-			foreignColumns: [table.id],
+			foreignColumns: [usersInAuth.id],
 			name: "users_auth_user_id_fkey"
 		}).onDelete("set null"),
 	unique("users_auth_user_id_key").on(table.authUserId),
@@ -175,3 +179,54 @@ export const utilityBills = pgTable("utility_bills", {
 	check("utility_bills_first_of_month", sql`billing_date = (date_trunc('month'::text, (billing_date)::timestamp with time zone))::date`),
 	check("utility_bills_gas_cost_check", sql`gas_cost >= (0)::numeric`),
 ]);
+
+export const cleaningAreas = pgTable("cleaning_areas", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	houseId: uuid("house_id").notNull(),
+	name: varchar({ length: 100 }).notNull(),
+	floor: integer().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("idx_cleaning_areas_house_id").using("btree", table.houseId.asc().nullsLast().op("uuid_ops")),
+	foreignKey({
+		columns: [table.houseId],
+		foreignColumns: [houses.id],
+		name: "cleaning_areas_house_id_fkey"
+	}).onDelete("cascade"),
+	unique("cleaning_areas_house_name_floor_key").on(table.houseId, table.name, table.floor),
+]).enableRLS();
+
+export const cleaningTasks = pgTable("cleaning_tasks", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	areaId: uuid("area_id").notNull(),
+	assignedRoomId: uuid("assigned_room_id").notNull(),
+	title: varchar({ length: 150 }).notNull(),
+	description: text(),
+	dueDate: date("due_date").notNull(),
+	status: cleaningStatus().default('open').notNull(),
+	completionNote: text("completion_note"),
+	completedAt: timestamp("completed_at", { withTimezone: true, mode: 'string' }),
+	lastRemindedAt: timestamp("last_reminded_at", { withTimezone: true, mode: 'string' }),
+	createdByEmployeeId: uuid("created_by_employee_id"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	index("idx_cleaning_tasks_area_id").using("btree", table.areaId.asc().nullsLast().op("uuid_ops")),
+	index("idx_cleaning_tasks_assigned_room_id").using("btree", table.assignedRoomId.asc().nullsLast().op("uuid_ops")),
+	index("idx_cleaning_tasks_due_date").using("btree", table.dueDate.asc().nullsLast().op("date_ops")),
+	foreignKey({
+		columns: [table.areaId],
+		foreignColumns: [cleaningAreas.id],
+		name: "cleaning_tasks_area_id_fkey"
+	}).onDelete("cascade"),
+	foreignKey({
+		columns: [table.assignedRoomId],
+		foreignColumns: [rooms.id],
+		name: "cleaning_tasks_assigned_room_id_fkey"
+	}).onDelete("cascade"),
+	foreignKey({
+		columns: [table.createdByEmployeeId],
+		foreignColumns: [employees.id],
+		name: "cleaning_tasks_created_by_employee_id_fkey"
+	}).onDelete("set null"),
+	check("cleaning_tasks_completion_state_check", sql`(status = 'open' AND completed_at IS NULL) OR (status = 'done' AND completed_at IS NOT NULL)`),
+]).enableRLS();
