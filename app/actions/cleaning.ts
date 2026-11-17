@@ -42,7 +42,10 @@ function todayISO() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
-function taskStatus(status: "open" | "done", due: string): CleaningRow["status"] {
+function taskStatus(
+  status: "open" | "done",
+  due: string,
+): CleaningRow["status"] {
   return status === "open" && due < todayISO() ? "overdue" : status;
 }
 
@@ -78,7 +81,10 @@ async function activeRoomIds(houseId: string) {
         eq(rooms.houseId, houseId),
         eq(contracts.status, "active"),
         sql`${contracts.startDate} <= CURRENT_DATE`,
-        or(sql`${contracts.endDate} IS NULL`, sql`${contracts.endDate} >= CURRENT_DATE`),
+        or(
+          sql`${contracts.endDate} IS NULL`,
+          sql`${contracts.endDate} >= CURRENT_DATE`,
+        ),
       ),
     )
     .orderBy(asc(rooms.roomNumber));
@@ -141,7 +147,10 @@ export async function getAdminCleaningData(adminId: string) {
     : await db.select().from(houses);
   const houseIds = houseRows.map((house) => house.id);
   const areaRows = houseIds.length
-    ? await db.select().from(cleaningAreas).where(inArray(cleaningAreas.houseId, houseIds))
+    ? await db
+        .select()
+        .from(cleaningAreas)
+        .where(inArray(cleaningAreas.houseId, houseIds))
     : [];
   const occupiedRoomIds = (
     await Promise.all(houseIds.map((houseId) => activeRoomIds(houseId)))
@@ -151,8 +160,16 @@ export async function getAdminCleaningData(adminId: string) {
     : [];
 
   return {
-    houses: houseRows.map((house) => ({ id: house.id, name: houseLabel(house) })),
-    areas: areaRows.map(({ id, houseId, name, floor }) => ({ id, houseId, name, floor })),
+    houses: houseRows.map((house) => ({
+      id: house.id,
+      name: houseLabel(house),
+    })),
+    areas: areaRows.map(({ id, houseId, name, floor }) => ({
+      id,
+      houseId,
+      name,
+      floor,
+    })),
     rooms: roomRows.map(({ id, houseId, roomNumber }) => ({
       id,
       houseId,
@@ -186,7 +203,10 @@ export async function getTenantCleaningData(houseId: string) {
         eq(rooms.houseId, houseId),
         eq(contracts.status, "active"),
         sql`${contracts.startDate} <= CURRENT_DATE`,
-        or(sql`${contracts.endDate} IS NULL`, sql`${contracts.endDate} >= CURRENT_DATE`),
+        or(
+          sql`${contracts.endDate} IS NULL`,
+          sql`${contracts.endDate} >= CURRENT_DATE`,
+        ),
       ),
     )
     .limit(1);
@@ -226,11 +246,15 @@ export async function getCleaningDashboardPath() {
           eq(contracts.tenantId, profile.id),
           eq(contracts.status, "active"),
           sql`${contracts.startDate} <= CURRENT_DATE`,
-          or(sql`${contracts.endDate} IS NULL`, sql`${contracts.endDate} >= CURRENT_DATE`),
+          or(
+            sql`${contracts.endDate} IS NULL`,
+            sql`${contracts.endDate} >= CURRENT_DATE`,
+          ),
         ),
       )
       .limit(1);
-    if (!contract) throw new Error("No active tenancy is linked to your account.");
+    if (!contract)
+      throw new Error("No active tenancy is linked to your account.");
     return `/tenant-dashboard/${contract.houseId}/cleaning-schedule`;
   }
   if (profile.role === "admin" || profile.role === "staff") {
@@ -249,10 +273,15 @@ export async function markCleaningTaskDone(taskId: string, note: string) {
   if (profile.role !== "tenant") {
     throw new Error("Only tenants can complete cleaning tasks.");
   }
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(taskId)) {
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      taskId,
+    )
+  ) {
     throw new Error("Invalid cleaning task.");
   }
-  if (note.length > 2000) throw new Error("The completion note must be 2000 characters or fewer.");
+  if (note.length > 2000)
+    throw new Error("The completion note must be 2000 characters or fewer.");
 
   const result = await db
     .update(cleaningTasks)
@@ -279,13 +308,19 @@ export async function markCleaningTaskDone(taskId: string, note: string) {
     .returning({ id: cleaningTasks.id });
 
   if (result.length === 0) {
-    throw new Error("This task is no longer open or is not assigned to your room.");
+    throw new Error(
+      "This task is no longer open or is not assigned to your room.",
+    );
   }
 }
 
 export async function sendCleaningReminder(adminId: string, taskId: string) {
   const { employee } = await authorizeAdmin(adminId);
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(taskId)) {
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      taskId,
+    )
+  ) {
     throw new Error("Invalid cleaning task.");
   }
 
@@ -329,23 +364,42 @@ function addDueDate(start: string, repeat: Repeat, occurrence: number) {
   if (repeat === "monthly") {
     date.setDate(1);
     date.setMonth(date.getMonth() + occurrence);
-    date.setDate(Math.min(day, new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()));
+    date.setDate(
+      Math.min(
+        day,
+        new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(),
+      ),
+    );
   }
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-export async function createCleaningTasks(adminId: string, input: CreateCleaningInput) {
+export async function createCleaningTasks(
+  adminId: string,
+  input: CreateCleaningInput,
+) {
   const { employee } = await authorizeAdmin(adminId);
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(input.houseId)) {
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      input.houseId,
+    )
+  ) {
     throw new Error("Choose a valid house.");
   }
   if (employee?.workHouseId && employee.workHouseId !== input.houseId) {
     throw new Error("You cannot create tasks for this house.");
   }
-  if (typeof input.title !== "string" || !input.title.trim() || input.title.length > 150) {
+  if (
+    typeof input.title !== "string" ||
+    !input.title.trim() ||
+    input.title.length > 150
+  ) {
     throw new Error("Enter a title of 1 to 150 characters.");
   }
-  if (typeof input.description !== "string" || input.description.length > 2000) {
+  if (
+    typeof input.description !== "string" ||
+    input.description.length > 2000
+  ) {
     throw new Error("The description must be 2000 characters or fewer.");
   }
   const parsedDueDate = /^\d{4}-\d{2}-\d{2}$/.test(input.firstDue)
@@ -365,7 +419,10 @@ export async function createCleaningTasks(adminId: string, input: CreateCleaning
   }
 
   const roomIds = await activeRoomIds(input.houseId);
-  if (roomIds.length === 0) throw new Error("There are no tenants with active contracts in this house.");
+  if (roomIds.length === 0)
+    throw new Error(
+      "There are no tenants with active contracts in this house.",
+    );
 
   if (input.newAreaName?.trim()) {
     if (
@@ -374,21 +431,34 @@ export async function createCleaningTasks(adminId: string, input: CreateCleaning
       input.floor! < -10 ||
       input.floor! > 200
     ) {
-      throw new Error("Enter a shared-space name (up to 100 characters) and a valid floor.");
+      throw new Error(
+        "Enter a shared-space name (up to 100 characters) and a valid floor.",
+      );
     }
   }
   const assignedRoomId = input.mode === "fixed" ? input.fixedRoomId : undefined;
-  if (input.mode === "fixed" && (!assignedRoomId || !roomIds.includes(assignedRoomId))) {
+  if (
+    input.mode === "fixed" &&
+    (!assignedRoomId || !roomIds.includes(assignedRoomId))
+  ) {
     throw new Error("Choose a room with an active tenant.");
   }
 
   const [employeeRow] = employee
     ? [employee]
-    : await db.select().from(employees).where(eq(employees.userId, (await getAuthenticatedProfile()).id)).limit(1);
+    : await db
+        .select()
+        .from(employees)
+        .where(eq(employees.userId, (await getAuthenticatedProfile()).id))
+        .limit(1);
   const count = input.repeat === "none" ? 1 : 4;
 
   await db.transaction(async (tx) => {
-    const [house] = await tx.select({ id: houses.id }).from(houses).where(eq(houses.id, input.houseId)).limit(1);
+    const [house] = await tx
+      .select({ id: houses.id })
+      .from(houses)
+      .where(eq(houses.id, input.houseId))
+      .limit(1);
     if (!house) throw new Error("The selected house no longer exists.");
 
     let areaId = input.areaId;
@@ -424,9 +494,17 @@ export async function createCleaningTasks(adminId: string, input: CreateCleaning
     const [area] = await tx
       .select({ id: cleaningAreas.id })
       .from(cleaningAreas)
-      .where(and(eq(cleaningAreas.id, areaId), eq(cleaningAreas.houseId, input.houseId)))
+      .where(
+        and(
+          eq(cleaningAreas.id, areaId),
+          eq(cleaningAreas.houseId, input.houseId),
+        ),
+      )
       .limit(1);
-    if (!area) throw new Error("The selected shared space does not belong to this house.");
+    if (!area)
+      throw new Error(
+        "The selected shared space does not belong to this house.",
+      );
 
     await tx.insert(cleaningTasks).values(
       Array.from({ length: count }, (_, occurrence) => ({
