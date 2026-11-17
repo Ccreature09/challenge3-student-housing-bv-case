@@ -117,13 +117,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   async function signOut() {
     setAuthError("");
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseAnonKey) {
+    const supabasePublishableKey =
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    if (!supabaseUrl || !supabasePublishableKey) {
       setAuthError("Supabase Auth is not configured.");
       return;
     }
 
-    const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+    const supabase = createBrowserClient(supabaseUrl, supabasePublishableKey);
     const { error } = await supabase.auth.signOut();
     if (error) {
       setAuthError(error.message);
