@@ -16,7 +16,7 @@ if (!databaseUrl) {
 }
 
 export default defineConfig({
-  schema: "./src/db/schema.ts",
+  schema: "./supabase/migrations/schema.ts",
   out: "./supabase/migrations",
   dialect: "postgresql",
   dbCredentials: {
