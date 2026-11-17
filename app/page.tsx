@@ -1,281 +1,200 @@
 import Link from "next/link";
 import "./globals.css";
-
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/sidebar";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen">
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar />
 
-      {/* Sidebar */}
-      <aside className="w-60 shrink-0 bg-blue-400 text-white font-bold">
-        <nav className="flex flex-col gap-1 p-2 font-sans text-base">
+        {/* Main content */}
+        <main className="min-w-0 flex-1 p-8">
 
-          <div
-            role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-blue-800"
-          >
-            <div className="mr-4 grid place-items-center">
-              {/* Dashboard SVG goes here */}
-            </div>
-            <img src="/images/sidelogo.png" alt="logo" width="40" height="40" className="rounded-3xl"/>
-          </div>
-
-          <div
-            role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-blue-800"
-          >
-            <div className="mr-4 grid place-items-center">
-              {/* Dashboard SVG goes here */}
-            </div>
-            Home
-          </div>
-
-          <div
-            role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-blue-800"
-          >
-            <div className="mr-4 grid place-items-center">
-              {/* E-Commerce SVG goes here */}
-            </div>
-            My repair requests
-          </div>
-
-          <div
-            role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-blue-800"
-          >
-            <div className="mr-4 grid place-items-center">
-              {/* Inbox SVG goes here */}
-            </div>
-            My account
-          </div>
-
-          <div
-            role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-blue-800"
-          >
-            <div className="mr-4 grid place-items-center">
-              {/* Settings SVG goes here */}
-            </div>
-            Settings
-          </div>
-
-          <div
-            role="button"
-            className="flex items-center w-full rounded-lg p-3 hover:bg-blue-800"
-          >
-            <div className="mr-4 grid place-items-center">
-              {/* Log Out SVG goes here */}
-            </div>
-            Log Out
-          </div>
-
-        </nav>
-      </aside>
-
-      {/* Main content */}
-      <main className="min-h-screen flex-1 p-20">
-
-        <div className="text-center">
-          <img src="/images/lightlogo.png" alt="logo" width="400" height="300"/><p>Your ideal Housing Management Platform</p>
-        </div>
-
-    <main className="flex min-h-screen flex-col items-center justify-between p-18">
-  
-
-    <div className ="flex gap-1 flex-wrap justify-center">
-      {/* Repairs box */}
-      <a
-        href="/tenant-dashboard/maintenance"
-        className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
-      >
-
-        <img
-          alt="Repairs and maintenance"
-          src="/images/repairs.png"
-          className="absolute inset-0 h-25 w-25 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
-        />
-
-
-        <div className="relative p-4 sm:p-6 lg:p-8">
-          <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-            Repairs
-          </p>
-
-          <p className="text-xl font-bold text-white sm:text-2xl">
-            Maintenance and Repairs
-          </p>
-
-          <div className="mt-32">
-            <div className="translate-y-8 transform opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-              <p className="text-sm text-white">
-                Fill in the form to report any maintenance requests or
-                repairs which need to be addressed, and our team will
-                promptly respond.
-              </p>
-            </div>
-          </div>
-        </div>
-      </a>
-
-      {/* Cleaning box */}
-      <a
-        href="/home/cleaning"
-        className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
-      >
-        <img
-          alt="Cleaning schedule"
-          src="/images/cleaning.png"
-          className="absolute inset-0 h-30 w-30 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
-        />
-
-        <div className="relative p-4 sm:p-6 lg:p-8">
-          <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-            Cleaning
-          </p>
-
-          <p className="text-xl font-bold text-white sm:text-2xl">
-            Cleaning Schedule
-          </p>
-
-          <div className="mt-32">
-            <div className="translate-y-8 transform opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-              <p className="text-sm text-white">
-                Schedule which flatmates are responsible for cleaning
-                common areas and when.
-              </p>
-            </div>
-          </div>
-        </div>
-      </a>
-
-
-      <a
-        href="/home/cleaning-schedule"
-        className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
-      >
-        <img
-          alt="Announcements and Events"
-          src="/images/announcements.png"
-          className="absolute inset-0 h-30 w-30 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
-        />
-
-        <div className="relative p-4 sm:p-6 lg:p-8">
-          <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-            Information
-          </p>
-
-          <p className="text-xl font-bold text-white sm:text-2xl">
-            Announcements and Events
-          </p>
-
-          <div className="mt-32">
-            <div className="translate-y-8 transform opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-              <p className="text-sm text-white">
-                View upcoming inspections, events, and important announcements related to your housing.
-              </p>
-            </div>
-          </div>
-        </div>
-      </a>
-
-
-
-      <Link
-        href="/tenant-dashboard/1/cleaning-schedule"
-        className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
-      >
-        <img
-          alt="Shared Inventory"
-          src="/images/inventory.png"
-          className="absolute inset-0 h-25 w-25 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
-        />
-
-        <div className="relative p-4 sm:p-6 lg:p-8">
-          <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-            Item-management
-          </p>
-
-          <p className="text-xl font-bold text-white sm:text-2xl">
-            Shared Inventory
-          </p>
-
-          <div className="mt-32">
-            <div className="translate-y-8 transform opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-              <p className="text-sm text-white">
-                View stock level of shared items and add items to shopping list if running low.
-              </p>
-            </div>
-          </div>
-        </div>
-      </Link>
-
-
-
-              
-          <Link
-            href="/cleaning-schedule"
-            className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
-          >
+          {/* Header */}
+          <header className="mb-8 text-center">
             <img
-              alt="Shopping List"
-              src="/images/shopping.png"
-              className="absolute inset-0 h-30 w-30 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
+              src="/images/lightlogo.png"
+              alt="Student Housing logo"
+              width="400"
+              height="300"
+              className="mx-auto"
             />
 
-            <div className="relative p-4 sm:p-6 lg:p-8">
-              <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-                Refurbishing supplies
-              </p>
+            <p className="text-3xl font-medium text-gray-700">
+              Student Housing Management Platform
+            </p>
+          </header>
 
-              <p className="text-xl font-bold text-white sm:text-2xl">
-                Shopping List
-              </p>
+          {/* Homepage cards */}
+          <div className="flex flex-wrap justify-center gap-4">
 
-              <div className="mt-32">
-                <div className="translate-y-8 transform opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  <p className="text-sm text-white">
-                    View stock level of shared items and add items to shopping list if running low.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Link>
-
-
-
+            {/* Repairs box */}
             <Link
-        href=""
-        className="group relative block bg-blue-400 h-60 w-60 mx-auto overflow-hidden rounded-lg m-4"
-      >
-        <img
-          alt="Complaints"
-          src="/images/complaints.svg"
-          className="absolute inset-0 h-25 w-25 object-cover opacity-75 transition-opacity group-hover:opacity-50 mx-auto top-25"
-        />
+              href="/tenant-dashboard/1/maintenance"
+              className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400"
+            >
+              <img
+                src="/images/repairs.png"
+                alt="Repairs and maintenance"
+                className="absolute inset-0 top-25 mx-auto h-25 w-25 object-contain opacity-75 transition-opacity group-hover:opacity-50"
+              />
 
-        <div className="relative p-4 sm:p-6 lg:p-8">
-          <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-            Issues
-          </p>
+              <div className="relative p-4">
+                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
+                  Repairs
+                </p>
 
-          <p className="text-xl font-bold text-white sm:text-2xl">
-            Complaints
-          </p>
+                <p className="text-xl text-white">
+                  Maintenance and Repairs
+                </p>
 
-          <div className="mt-32">
-            <div className="translate-y-8 transform opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-              <p className="text-sm text-white">
-               Report any issues with your flatmates or property.
-              </p>
-            </div>
+                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
+                  Fill in the form to report any maintenance requests or
+                  repairs which need to be addressed, and our team will
+                  promptly respond.
+                </p>
+              </div>
+            </Link>
+
+            {/* Cleaning box */}
+            <Link
+              href="/tenant-dashboard/1/cleaning-schedule"
+              className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400"
+            >
+              <img
+                src="/images/cleaning.png"
+                alt="Cleaning schedule"
+                className="absolute inset-0 top-25 mx-auto h-30 w-30 object-contain opacity-75 transition-opacity group-hover:opacity-50"
+              />
+
+              <div className="relative p-4">
+                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
+                  Cleaning
+                </p>
+
+                <p className="text-xl text-white">
+                  Cleaning Schedule
+                </p>
+
+                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
+                  Schedule which flatmates are responsible for cleaning
+                  common areas and when.
+                </p>
+              </div>
+            </Link>
+
+            {/* Announcements box */}
+            <Link
+              href="/tenant-dashboard/1/announcements"
+              className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400"
+            >
+              <img
+                src="/images/announcements.png"
+                alt="Announcements and events"
+                className="absolute inset-0 top-25 mx-auto h-30 w-30 object-contain opacity-75 transition-opacity group-hover:opacity-50"
+              />
+
+              <div className="relative p-4">
+                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
+                  Information
+                </p>
+
+                <p className="text-xl text-white">
+                  Announcements and Events
+                </p>
+
+                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
+                  View upcoming inspections, events, and important
+                  announcements related to your housing.
+                </p>
+              </div>
+            </Link>
+
+            {/* Shared Inventory box */}
+            <Link
+              href="/tenant-dashboard/1/shared-inventory"
+              className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400"
+            >
+              <img
+                src="/images/inventory.png"
+                alt="Shared inventory"
+                className="absolute inset-0 top-25 mx-auto h-25 w-25 object-contain opacity-75 transition-opacity group-hover:opacity-50"
+              />
+
+              <div className="relative p-4">
+                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
+                  Item management
+                </p>
+
+                <p className="text-xl text-white">
+                  Shared Inventory
+                </p>
+
+                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
+                  View stock levels of shared items and add items to the
+                  shopping list if supplies are running low.
+                </p>
+              </div>
+            </Link>
+
+            {/* Shopping List box */}
+            <Link
+              href="/tenant-dashboard/1/shopping-list"
+              className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400"
+            >
+              <img
+                src="/images/shopping.png"
+                alt="Shopping list"
+                className="absolute inset-0 top-25 mx-auto h-30 w-30 object-contain opacity-75 transition-opacity group-hover:opacity-50"
+              />
+
+              <div className="relative p-4">
+                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
+                  Refurbishing supplies
+                </p>
+
+                <p className="text-xl text-white">
+                  Shopping List
+                </p>
+
+                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
+                  View items that need replenishing and add new items
+                  to the shared shopping list.
+                </p>
+              </div>
+            </Link>
+
+            {/* Complaints box */}
+            <Link
+              href="/tenant-dashboard/1/complaints"
+              className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400"
+            >
+              <img
+                src="/images/complaints.svg"
+                alt="Complaints"
+                className="absolute inset-0 top-25 mx-auto h-25 w-25 object-contain opacity-75 transition-opacity group-hover:opacity-50"
+              />
+
+              <div className="relative p-4">
+                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
+                  Issues
+                </p>
+
+                <p className="text-xl text-white">
+                  Complaints
+                </p>
+
+                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
+                  Report any issues with your flatmates or property.
+                </p>
+              </div>
+            </Link>
+
           </div>
-        </div>
-      </Link>
-    </div>
-    </main>
-    </main>
-    </div>
-    
-  )
+        </main>
+      </div>
+    </SidebarProvider>
+  );
 }
