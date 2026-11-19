@@ -26,9 +26,41 @@ const fieldStyle = [
   "outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-200",
 ].join(" ")
 
+const initialRequests: Request[] = [
+  {
+    id: 213,
+    title: "Loose cabinet door",
+    location: "Kitchen",
+    tenant: "V. L.",
+    submitted: "5 Nov",
+    description: "The door hangs off one hinge.",
+    status: "In progress",
+    response: "",
+  },
+  {
+    id: 137,
+    title: "Light out",
+    location: "Hallway, 2nd floor",
+    tenant: "A. K.",
+    submitted: "8 Nov",
+    description: "The light in the hallway does not turn on.",
+    status: "Submitted",
+    response: "",
+  },
+  {
+    id: 98,
+    title: "Leaking tap",
+    location: "Bathroom",
+    tenant: "M. S.",
+    submitted: "1 Nov",
+    description: "The tap drips all the time.",
+    status: "Resolved",
+    response: "Fixed on 3 Nov.",
+  },
+]
 
 export default function AdminPage() {
-  const [requests, setRequests] = useState<Request[]>([])
+  const [requests, setRequests] = useState<Request[]>(initialRequests)
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
   const [draftStatus, setDraftStatus] = useState<Status>("Submitted")
