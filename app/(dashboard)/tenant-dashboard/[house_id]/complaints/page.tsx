@@ -4,7 +4,7 @@ export default function Complaints() {
         <div>
             <h1 className="text-center text-3xl top-10">Complaints</h1>
         <Link href="/tenant-dashboard/1/complaints/view-complaints"
-        className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400 translate-x-1/2 translate-y-1/2">
+        className="group relative block h-80 w-80 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400 translate-x-1/2 translate-y-1/2">
            <div
               
             >
@@ -32,7 +32,7 @@ export default function Complaints() {
 
         <div>
         <Link href="/tenant-dashboard/1/complaints/create-complaints"
-          className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400 translate-x-[320%] translate-y-[-48%]">
+          className="group relative block h-80 w-80 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400 translate-x-[250%] translate-y-[-48%]">
           <img
             src="/images/create.png"
             alt="Complaints"
