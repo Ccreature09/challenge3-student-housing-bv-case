@@ -37,7 +37,6 @@ const filterOff = [
 ].join(" ")
 
 export default function MaintenancePage() {
-  // Какой экран показан: таблица или форма
   const [view, setView] = useState<View>("requests")
 
   const [requests, setRequests] = useState<Request[]>([])

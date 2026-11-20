@@ -28,7 +28,7 @@ const fieldStyle = [
 
 const initialRequests: Request[] = [
   {
-    id: 213,
+    id: 1,
     title: "Loose cabinet door",
     location: "Kitchen",
     tenant: "V. L.",
@@ -38,7 +38,7 @@ const initialRequests: Request[] = [
     response: "",
   },
   {
-    id: 137,
+    id: 2,
     title: "Light out",
     location: "Hallway, 2nd floor",
     tenant: "A. K.",
@@ -48,7 +48,7 @@ const initialRequests: Request[] = [
     response: "",
   },
   {
-    id: 98,
+    id: 3,
     title: "Leaking tap",
     location: "Bathroom",
     tenant: "M. S.",
