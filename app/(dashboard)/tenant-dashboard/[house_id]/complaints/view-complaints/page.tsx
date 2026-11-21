@@ -1,12 +1,17 @@
 import { Button } from "@/components/ui/button"
+import Link from "next/link";
 
 export default function ViewComplaints() {
   return (
     <main>
       <h1 className="text-center text-3xl mt-4">My Complaints</h1>
-        <Button variant="outline"
-            className="bg-blue-400 h-16 rounded-2xl border-2 blue-500 px-8 text-lg text-white hover:text-white">Create Complaint
-        </Button>
+          <div className="flex items-center justify-between">
+                <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+                    <Link href="/tenant-dashboard/1/create-complaint">
+                    <Button>Create Complaint</Button>
+                    </Link>
+                </button>
+                </div>
       <div
   className="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
   <table className="w-full text-left table-auto min-w-max">
