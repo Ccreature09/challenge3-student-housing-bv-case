@@ -3,50 +3,36 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Get the current file's directory
+// Locate .env.local in the same folder
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load .env.local from the same folder as database.ts
 dotenv.config({
     path: path.resolve(__dirname, ".env.local"),
     override: true
 });
 
-// Read environment variables
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+// Load credentials
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_ANON_KEY!;
 
-// Validate configuration
-if (!supabaseUrl || !supabaseKey) {
-    throw new Error(
-        "Missing SUPABASE_URL or SUPABASE_ANON_KEY in .env.local"
-    );
-}
-
-// Create Supabase client
+// Connect to Supabase
 export const supabase = createClient(
     supabaseUrl,
     supabaseKey
 );
 
-// Test database connection
+// Fetch first 5 users
 export async function testConnection() {
-    console.log("Connecting to Supabase...");
-
-    const { data, error } = await supabase
+    const result = await supabase
         .from("USERS")
-        .select("*")
+        .select("*", { count: "exact" })
         .limit(5);
 
-    if (error) {
-        console.error("Supabase connection error:", error.message);
-        return;
-    }
-
-    console.log("Successfully connected to Supabase!");
-    console.table(data);
+    console.log("Error:", result.error);
+    console.log("Count:", result.count);
+    console.log("Data:", result.data);
 }
 
-// Run connection test
+// Execute test
 testConnection();
