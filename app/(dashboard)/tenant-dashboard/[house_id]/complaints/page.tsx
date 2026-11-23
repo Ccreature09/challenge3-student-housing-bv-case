@@ -1,59 +1,111 @@
+import { Button } from "@/components/ui/button"
 import Link from "next/link";
-export default function Complaints() {
-    return (
-        <div>
-            <h1 className="text-center text-3xl top-10">Complaints</h1>
-        <Link href="/tenant-dashboard/1/complaints/view-complaints"
-        className="group relative block h-80 w-80 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400 translate-x-1/2 translate-y-1/2">
-           <div
-              
-            >
-              <img
-                src="/images/view.webp"
-                alt="Complaints"
-                className="absolute inset-0 top-25 mx-auto h-25 w-25 object-contain opacity-75 transition-opacity group-hover:opacity-50"
-              />
 
-              <div className="relative p-4">
-                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-                  Issues
-                </p>
+export default function ViewComplaints() {
+  return (
+    <main>
+      <h1 className="text-center text-3xl mt-4">My Complaints</h1>
+          <div className="flex items-center justify-between">
+                <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline border-3 border-blue-900" type="button">
+                    <Link href="/tenant-dashboard/1/complaints/create-complaints">
+                    <Button>Create Complaint</Button>
+                    </Link>
+                </button>
+                </div>
+      <div
+  className="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
+  <table className="w-full text-left table-auto min-w-max">
+    <thead>
+      <tr>
+        <th className="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
+          <p className="block font-sans text-sm antialiased font-normal leading-none text-blue-gray-900 opacity-70">
+            #
+          </p>
+        </th>
+        <th className="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
+          <p className="block font-sans text-sm antialiased font-normal leading-none text-blue-gray-900 opacity-70">
+            Complaint
+          </p>
+        </th>
+        <th className="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
+          <p className="block font-sans text-sm antialiased font-normal leading-none text-blue-gray-900 opacity-70">
+            Location
+          </p>
+        </th>
+        <th className="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
+          <p className="block font-sans text-sm antialiased font-normal leading-none text-blue-gray-900 opacity-70">
+            16/11/2026
+          </p>
+        </th>
+        <th className="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
+          <p className="block font-sans text-sm antialiased font-normal leading-none text-blue-gray-900 opacity-70">
+            Resolved
+          </p>
+        </th>
+        
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td className="p-4 border-b border-blue-gray-50">
+          <p className="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900">
+            1
+          </p>
+        </td>
+        <td className="p-4 border-b border-blue-gray-50">
+          <p className="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900">
+            Frequent and disruptive parties
+          </p>
+        </td>
+        <td className="p-4 border-b border-blue-gray-50">
+          <p className="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900">
+            Gravesanderstaad
+          </p>
+        </td>
+        <td className="p-4 border-b border-blue-gray-50">
+          <a href="#" className="block font-sans text-sm antialiased font-medium leading-normal text-blue-gray-900">
+            16/11/2026
+          </a>
+        </td>
+        <td className="p-4 border-b border-blue-gray-50">
+          <a href="#" className="block font-sans text-sm antialiased font-medium leading-normal text-blue-gray-900">
+            Resolved
+          </a>
+        </td>
+      </tr>
+      <tr>
+        <td className="p-4 border-b border-blue-gray-50">
+          <p className="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900">
+            2
+          </p>
+        </td>
+        <td className="p-4 border-b border-blue-gray-50">
+          <p className="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900">
+            Loud Noises after 10:00 PM
+          </p>
+        </td>
+        <td className="p-4 border-b border-blue-gray-50">
+          <p className="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900">
+            Johannes Van Der Waalsweg
+          </p>
+        </td>
+        <td className="p-4 border-b border-blue-gray-50">
+          <a href="#" className="block font-sans text-sm antialiased font-medium leading-normal text-blue-gray-900">
+            17/11/2026
+          </a>
+        </td>
 
-                <p className="text-xl text-white">
-                  View Complaints
-                </p>
-
-                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  View any reported issues with your flatmates or property.
-                </p>
-              </div>
-            </div>
-        </Link>
-
-        <div>
-        <Link href="/tenant-dashboard/1/complaints/create-complaints"
-          className="group relative block h-80 w-80 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400 translate-x-[250%] translate-y-[-48%]">
-          <img
-            src="/images/create.png"
-            alt="Complaints"
-            className="absolute inset-0 top-25 mx-auto h-25 w-25 object-contain opacity-75 transition-opacity group-hover:opacity-50"
-          />
-
-              <div className="relative p-4">
-                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-                  Issues
-                </p>
-
-                <p className="text-xl text-white">
-                  Create Complaint
-                </p>
-
-                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  Report any issues with your flatmates or property.
-                </p>
-              </div>
-          </Link>
-        </div>
-        </div>
-    )
-};
+        <td className="p-4 border-b border-blue-gray-50">
+          <a href="#" className="block font-sans text-sm antialiased font-medium leading-normal text-blue-gray-900">
+            In progress
+          </a>
+        </td>
+      </tr>
+      <tr>
+      </tr>
+    </tbody>
+  </table>
+</div>
+    </main>
+  );
+}
