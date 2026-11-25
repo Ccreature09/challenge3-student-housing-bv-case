@@ -11,41 +11,12 @@ import {
   rooms,
 } from "@/supabase/migrations/schema";
 
-type CleaningRow = {
-  id: string;
-  houseId: string;
-  houseName: string;
-  areaId: string;
-  areaName: string;
-  floor: number;
-  roomId: string;
-  roomNumber: number;
-  title: string;
-  description: string | null;
-  due: string;
-  status: "open" | "overdue" | "done";
-  note: string | null;
-  remindedAt: string | null;
-};
-
 function houseLabel(house: typeof houses.$inferSelect) {
   return `${house.street} ${house.houseNumber}, ${house.city}`;
 }
 
 function roomLabel(roomNumber: number) {
   return `Room ${String(roomNumber).padStart(3, "0")}`;
-}
-
-function todayISO() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-}
-
-function taskStatus(
-  status: "open" | "done",
-  due: string,
-): CleaningRow["status"] {
-  return status === "open" && due < todayISO() ? "overdue" : status;
 }
 
 async function authorizeAdmin(adminId: string) {
@@ -77,55 +48,6 @@ async function activeRoomIds(houseId: string) {
     )
     .orderBy(asc(rooms.roomNumber));
   return [...new Set(rows.map((row) => row.roomId))];
-}
-
-async function getCleaningRows(houseIds?: string[]): Promise<CleaningRow[]> {
-  if (houseIds && houseIds.length === 0) return [];
-
-  const query = db
-    .select({
-      id: cleaningTasks.id,
-      houseId: cleaningAreas.houseId,
-      street: houses.street,
-      houseNumber: houses.houseNumber,
-      city: houses.city,
-      areaId: cleaningAreas.id,
-      areaName: cleaningAreas.name,
-      floor: cleaningAreas.floor,
-      roomId: rooms.id,
-      roomNumber: rooms.roomNumber,
-      title: cleaningTasks.title,
-      description: cleaningTasks.description,
-      due: cleaningTasks.dueDate,
-      taskState: cleaningTasks.status,
-      note: cleaningTasks.completionNote,
-      remindedAt: cleaningTasks.lastRemindedAt,
-    })
-    .from(cleaningTasks)
-    .innerJoin(cleaningAreas, eq(cleaningTasks.areaId, cleaningAreas.id))
-    .innerJoin(rooms, eq(cleaningTasks.assignedRoomId, rooms.id))
-    .innerJoin(houses, eq(cleaningAreas.houseId, houses.id))
-    .orderBy(asc(cleaningTasks.dueDate));
-  const rows = houseIds
-    ? await query.where(inArray(cleaningAreas.houseId, houseIds))
-    : await query;
-
-  return rows.map((row) => ({
-    id: row.id,
-    houseId: row.houseId,
-    houseName: `${row.street} ${row.houseNumber}, ${row.city}`,
-    areaId: row.areaId,
-    areaName: row.areaName,
-    floor: row.floor,
-    roomId: row.roomId,
-    roomNumber: row.roomNumber,
-    title: row.title,
-    description: row.description,
-    due: row.due,
-    status: taskStatus(row.taskState, row.due),
-    note: row.note,
-    remindedAt: row.remindedAt,
-  }));
 }
 
 export async function getAdminCleaningData(adminId: string) {
@@ -161,131 +83,7 @@ export async function getAdminCleaningData(adminId: string) {
       houseId,
       label: roomLabel(roomNumber),
     })),
-    tasks: await getCleaningRows(houseIds),
   };
-}
-
-export async function getTenantCleaningData(houseId: string) {
-  const profile = await getAuthenticatedProfile();
-  if (profile.role !== "tenant") {
-    throw new Error("Only tenants can view this cleaning schedule.");
-  }
-
-  const [assignment] = await db
-    .select({
-      roomId: rooms.id,
-      roomNumber: rooms.roomNumber,
-      houseId: houses.id,
-      street: houses.street,
-      houseNumber: houses.houseNumber,
-      city: houses.city,
-    })
-    .from(roomAssignments)
-    .innerJoin(rooms, eq(roomAssignments.roomId, rooms.id))
-    .innerJoin(houses, eq(rooms.houseId, houses.id))
-    .where(
-      and(
-        eq(roomAssignments.studentId, profile.id),
-        eq(rooms.houseId, houseId),
-        sql`${roomAssignments.startDate} <= CURRENT_DATE`,
-        or(
-          sql`${roomAssignments.endDate} IS NULL`,
-          sql`${roomAssignments.endDate} >= CURRENT_DATE`,
-        ),
-      ),
-    )
-    .limit(1);
-
-  if (!assignment) {
-    throw new Error("No active tenancy was found for this house.");
-  }
-
-  const areaRows = await db
-    .select({
-      id: cleaningAreas.id,
-      name: cleaningAreas.name,
-      floor: cleaningAreas.floor,
-    })
-    .from(cleaningAreas)
-    .where(eq(cleaningAreas.houseId, houseId));
-
-  return {
-    tenantName: profile.firstName,
-    roomId: assignment.roomId,
-    room: roomLabel(assignment.roomNumber),
-    houseName: `${assignment.street} ${assignment.houseNumber}, ${assignment.city}`,
-    areas: areaRows,
-    tasks: await getCleaningRows([houseId]),
-  };
-}
-
-export async function markCleaningTaskDone(taskId: string, note: string) {
-  const profile = await getAuthenticatedProfile();
-  if (profile.role !== "tenant") {
-    throw new Error("Only tenants can complete cleaning tasks.");
-  }
-  if (
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      taskId,
-    )
-  ) {
-    throw new Error("Invalid cleaning task.");
-  }
-  if (note.length > 2000)
-    throw new Error("The completion note must be 2000 characters or fewer.");
-
-  const result = await db
-    .update(cleaningTasks)
-    .set({
-      status: "done",
-      completedAt: new Date().toISOString(),
-      completionNote: note.trim() || null,
-    })
-    .where(
-      and(
-        eq(cleaningTasks.id, taskId),
-        eq(cleaningTasks.status, "open"),
-        sql`EXISTS (
-          SELECT 1
-          FROM ${roomAssignments}
-          WHERE ${roomAssignments.studentId} = ${profile.id}
-            AND ${roomAssignments.roomId} = ${cleaningTasks.assignedRoomId}
-            AND ${roomAssignments.startDate} <= CURRENT_DATE
-            AND (${roomAssignments.endDate} IS NULL OR ${roomAssignments.endDate} >= CURRENT_DATE)
-        )`,
-      ),
-    )
-    .returning({ id: cleaningTasks.id });
-
-  if (result.length === 0) {
-    throw new Error(
-      "This task is no longer open or is not assigned to your room.",
-    );
-  }
-}
-
-export async function sendCleaningReminder(adminId: string, taskId: string) {
-  await authorizeAdmin(adminId);
-  if (
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      taskId,
-    )
-  ) {
-    throw new Error("Invalid cleaning task.");
-  }
-
-  const [task] = await db
-    .select({ id: cleaningTasks.id, houseId: cleaningAreas.houseId })
-    .from(cleaningTasks)
-    .innerJoin(cleaningAreas, eq(cleaningTasks.areaId, cleaningAreas.id))
-    .where(and(eq(cleaningTasks.id, taskId), eq(cleaningTasks.status, "open")))
-    .limit(1);
-  if (!task) throw new Error("Only open cleaning tasks can be reminded.");
-
-  await db
-    .update(cleaningTasks)
-    .set({ lastRemindedAt: new Date().toISOString() })
-    .where(eq(cleaningTasks.id, task.id));
 }
 
 type Repeat = "none" | "weekly" | "biweekly" | "monthly";

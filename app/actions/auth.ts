@@ -29,7 +29,7 @@ export async function getHousingDashboardPath() {
       throw new Error("No active room assignment is linked to your account.");
     }
 
-    return `/tenant-dashboard/${assignment.houseId}/cleaning-schedule`;
+    return `/tenant-dashboard/${assignment.houseId}/complaints`;
   }
 
   if (profile.role === "admin") {

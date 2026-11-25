@@ -56,7 +56,7 @@ export default function Home() {
 
             {/* Cleaning box */}
             <Link
-              href="/admin-dashboard/1/cleaning-schedule"
+              href="/admin-dashboard/1/cleaning-schedule/new"
               className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400"
             >
               <img
