@@ -1,5 +1,5 @@
 import Link from "next/link";
-import "./globals.css";
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar";
 
@@ -11,7 +11,6 @@ export default function Home() {
 
         {/* Main content */}
         <main className="min-w-0 flex-1 p-8">
-
           {/* Header */}
           <header className="mb-8 text-center">
             <img
@@ -29,7 +28,6 @@ export default function Home() {
 
           {/* Homepage cards */}
           <div className="flex flex-wrap justify-center gap-4">
-
             {/* Repairs box */}
             <Link
               href="/admin-dashboard/1/maintenance"
@@ -46,12 +44,12 @@ export default function Home() {
                   Repairs
                 </p>
 
-                <p className="text-xl text-white">
-                  Maintenance and Repairs
-                </p>
+                <p className="text-xl text-white">Maintenance and Repairs</p>
 
                 <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  Fill in the form to report any maintenance requests or repairs which need to be addressed, and our team will promptly respond.
+                  Fill in the form to report any maintenance requests or repairs
+                  which need to be addressed, and our team will promptly
+                  respond.
                 </p>
               </div>
             </Link>
@@ -72,12 +70,11 @@ export default function Home() {
                   Cleaning
                 </p>
 
-                <p className="text-xl text-white">
-                  Cleaning Schedule
-                </p>
+                <p className="text-xl text-white">Cleaning Schedule</p>
 
                 <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  Schedule which flatmates are responsible for cleaning common areas and when.
+                  Schedule which flatmates are responsible for cleaning common
+                  areas and when.
                 </p>
               </div>
             </Link>
@@ -98,13 +95,11 @@ export default function Home() {
                   Information
                 </p>
 
-                <p className="text-xl text-white">
-                  Announcements and Events
-                </p>
+                <p className="text-xl text-white">Announcements and Events</p>
 
                 <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  View upcoming inspections, events, and important
-                  announcements related to your housing.
+                  View upcoming inspections, events, and important announcements
+                  related to your housing.
                 </p>
               </div>
             </Link>
@@ -125,9 +120,7 @@ export default function Home() {
                   Item management
                 </p>
 
-                <p className="text-xl text-white">
-                  Shared Inventory
-                </p>
+                <p className="text-xl text-white">Shared Inventory</p>
 
                 <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
                   View stock levels of shared items and add items to the
@@ -152,13 +145,11 @@ export default function Home() {
                   Refurbishing supplies
                 </p>
 
-                <p className="text-xl text-white">
-                  Shopping List
-                </p>
+                <p className="text-xl text-white">Shopping List</p>
 
                 <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  View items that need replenishing and add new items
-                  to the shared shopping list.
+                  View items that need replenishing and add new items to the
+                  shared shopping list.
                 </p>
               </div>
             </Link>
@@ -179,9 +170,7 @@ export default function Home() {
                   Issues
                 </p>
 
-                <p className="text-xl text-white">
-                  Complaints
-                </p>
+                <p className="text-xl text-white">Complaints</p>
 
                 <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
                   Report any issues with your flatmates or property.

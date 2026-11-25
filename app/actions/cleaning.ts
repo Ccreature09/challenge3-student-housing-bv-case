@@ -6,9 +6,8 @@ import { getAuthenticatedProfile } from "@/lib/server-auth";
 import {
   cleaningAreas,
   cleaningTasks,
-  contracts,
-  employees,
   houses,
+  roomAssignments,
   rooms,
 } from "@/supabase/migrations/schema";
 
@@ -51,39 +50,28 @@ function taskStatus(
 
 async function authorizeAdmin(adminId: string) {
   const profile = await getAuthenticatedProfile();
-  if (profile.role !== "admin" && profile.role !== "staff") {
-    throw new Error("Only admins and staff can manage cleaning schedules.");
+  if (profile.role !== "admin") {
+    throw new Error("Only admins can manage cleaning schedules.");
   }
-
-  const [employee] = await db
-    .select()
-    .from(employees)
-    .where(eq(employees.userId, profile.id))
-    .limit(1);
-
-  if (profile.role === "staff" && !employee?.workHouseId) {
-    throw new Error("Your staff account is not assigned to a house.");
-  }
-  if (adminId !== profile.id && adminId !== employee?.id) {
+  if (adminId !== profile.id) {
     throw new Error("This admin dashboard does not belong to your account.");
   }
 
-  return { profile, employee };
+  return profile;
 }
 
 async function activeRoomIds(houseId: string) {
   const rows = await db
-    .select({ roomId: contracts.roomId })
-    .from(contracts)
-    .innerJoin(rooms, eq(contracts.roomId, rooms.id))
+    .select({ roomId: roomAssignments.roomId })
+    .from(roomAssignments)
+    .innerJoin(rooms, eq(roomAssignments.roomId, rooms.id))
     .where(
       and(
         eq(rooms.houseId, houseId),
-        eq(contracts.status, "active"),
-        sql`${contracts.startDate} <= CURRENT_DATE`,
+        sql`${roomAssignments.startDate} <= CURRENT_DATE`,
         or(
-          sql`${contracts.endDate} IS NULL`,
-          sql`${contracts.endDate} >= CURRENT_DATE`,
+          sql`${roomAssignments.endDate} IS NULL`,
+          sql`${roomAssignments.endDate} >= CURRENT_DATE`,
         ),
       ),
     )
@@ -141,10 +129,8 @@ async function getCleaningRows(houseIds?: string[]): Promise<CleaningRow[]> {
 }
 
 export async function getAdminCleaningData(adminId: string) {
-  const { employee } = await authorizeAdmin(adminId);
-  const houseRows = employee?.workHouseId
-    ? await db.select().from(houses).where(eq(houses.id, employee.workHouseId))
-    : await db.select().from(houses);
+  await authorizeAdmin(adminId);
+  const houseRows = await db.select().from(houses);
   const houseIds = houseRows.map((house) => house.id);
   const areaRows = houseIds.length
     ? await db
@@ -185,7 +171,7 @@ export async function getTenantCleaningData(houseId: string) {
     throw new Error("Only tenants can view this cleaning schedule.");
   }
 
-  const [contract] = await db
+  const [assignment] = await db
     .select({
       roomId: rooms.id,
       roomNumber: rooms.roomNumber,
@@ -194,24 +180,23 @@ export async function getTenantCleaningData(houseId: string) {
       houseNumber: houses.houseNumber,
       city: houses.city,
     })
-    .from(contracts)
-    .innerJoin(rooms, eq(contracts.roomId, rooms.id))
+    .from(roomAssignments)
+    .innerJoin(rooms, eq(roomAssignments.roomId, rooms.id))
     .innerJoin(houses, eq(rooms.houseId, houses.id))
     .where(
       and(
-        eq(contracts.tenantId, profile.id),
+        eq(roomAssignments.studentId, profile.id),
         eq(rooms.houseId, houseId),
-        eq(contracts.status, "active"),
-        sql`${contracts.startDate} <= CURRENT_DATE`,
+        sql`${roomAssignments.startDate} <= CURRENT_DATE`,
         or(
-          sql`${contracts.endDate} IS NULL`,
-          sql`${contracts.endDate} >= CURRENT_DATE`,
+          sql`${roomAssignments.endDate} IS NULL`,
+          sql`${roomAssignments.endDate} >= CURRENT_DATE`,
         ),
       ),
     )
     .limit(1);
 
-  if (!contract) {
+  if (!assignment) {
     throw new Error("No active tenancy was found for this house.");
   }
 
@@ -226,46 +211,12 @@ export async function getTenantCleaningData(houseId: string) {
 
   return {
     tenantName: profile.firstName,
-    roomId: contract.roomId,
-    room: roomLabel(contract.roomNumber),
-    houseName: `${contract.street} ${contract.houseNumber}, ${contract.city}`,
+    roomId: assignment.roomId,
+    room: roomLabel(assignment.roomNumber),
+    houseName: `${assignment.street} ${assignment.houseNumber}, ${assignment.city}`,
     areas: areaRows,
     tasks: await getCleaningRows([houseId]),
   };
-}
-
-export async function getCleaningDashboardPath() {
-  const profile = await getAuthenticatedProfile();
-  if (profile.role === "tenant") {
-    const [contract] = await db
-      .select({ houseId: rooms.houseId })
-      .from(contracts)
-      .innerJoin(rooms, eq(contracts.roomId, rooms.id))
-      .where(
-        and(
-          eq(contracts.tenantId, profile.id),
-          eq(contracts.status, "active"),
-          sql`${contracts.startDate} <= CURRENT_DATE`,
-          or(
-            sql`${contracts.endDate} IS NULL`,
-            sql`${contracts.endDate} >= CURRENT_DATE`,
-          ),
-        ),
-      )
-      .limit(1);
-    if (!contract)
-      throw new Error("No active tenancy is linked to your account.");
-    return `/tenant-dashboard/${contract.houseId}/cleaning-schedule`;
-  }
-  if (profile.role === "admin" || profile.role === "staff") {
-    const [employee] = await db
-      .select({ id: employees.id })
-      .from(employees)
-      .where(eq(employees.userId, profile.id))
-      .limit(1);
-    return `/admin-dashboard/${employee?.id ?? profile.id}/cleaning-schedule`;
-  }
-  throw new Error("Your account does not have access to cleaning schedules.");
 }
 
 export async function markCleaningTaskDone(taskId: string, note: string) {
@@ -296,12 +247,11 @@ export async function markCleaningTaskDone(taskId: string, note: string) {
         eq(cleaningTasks.status, "open"),
         sql`EXISTS (
           SELECT 1
-          FROM ${contracts}
-          WHERE ${contracts.tenantId} = ${profile.id}
-            AND ${contracts.roomId} = ${cleaningTasks.assignedRoomId}
-            AND ${contracts.status} = 'active'
-            AND ${contracts.startDate} <= CURRENT_DATE
-            AND (${contracts.endDate} IS NULL OR ${contracts.endDate} >= CURRENT_DATE)
+          FROM ${roomAssignments}
+          WHERE ${roomAssignments.studentId} = ${profile.id}
+            AND ${roomAssignments.roomId} = ${cleaningTasks.assignedRoomId}
+            AND ${roomAssignments.startDate} <= CURRENT_DATE
+            AND (${roomAssignments.endDate} IS NULL OR ${roomAssignments.endDate} >= CURRENT_DATE)
         )`,
       ),
     )
@@ -315,7 +265,7 @@ export async function markCleaningTaskDone(taskId: string, note: string) {
 }
 
 export async function sendCleaningReminder(adminId: string, taskId: string) {
-  const { employee } = await authorizeAdmin(adminId);
+  await authorizeAdmin(adminId);
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       taskId,
@@ -331,9 +281,6 @@ export async function sendCleaningReminder(adminId: string, taskId: string) {
     .where(and(eq(cleaningTasks.id, taskId), eq(cleaningTasks.status, "open")))
     .limit(1);
   if (!task) throw new Error("Only open cleaning tasks can be reminded.");
-  if (employee?.workHouseId && employee.workHouseId !== task.houseId) {
-    throw new Error("You cannot send reminders for this house.");
-  }
 
   await db
     .update(cleaningTasks)
@@ -378,16 +325,13 @@ export async function createCleaningTasks(
   adminId: string,
   input: CreateCleaningInput,
 ) {
-  const { employee } = await authorizeAdmin(adminId);
+  await authorizeAdmin(adminId);
   if (
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       input.houseId,
     )
   ) {
     throw new Error("Choose a valid house.");
-  }
-  if (employee?.workHouseId && employee.workHouseId !== input.houseId) {
-    throw new Error("You cannot create tasks for this house.");
   }
   if (
     typeof input.title !== "string" ||
@@ -421,7 +365,7 @@ export async function createCleaningTasks(
   const roomIds = await activeRoomIds(input.houseId);
   if (roomIds.length === 0)
     throw new Error(
-      "There are no tenants with active contracts in this house.",
+      "There are no tenants with active room assignments in this house.",
     );
 
   if (input.newAreaName?.trim()) {
@@ -444,13 +388,6 @@ export async function createCleaningTasks(
     throw new Error("Choose a room with an active tenant.");
   }
 
-  const [employeeRow] = employee
-    ? [employee]
-    : await db
-        .select()
-        .from(employees)
-        .where(eq(employees.userId, (await getAuthenticatedProfile()).id))
-        .limit(1);
   const count = input.repeat === "none" ? 1 : 4;
 
   await db.transaction(async (tx) => {
@@ -514,7 +451,6 @@ export async function createCleaningTasks(
         description: input.description.trim() || null,
         dueDate: addDueDate(input.firstDue, input.repeat, occurrence),
         status: "open" as const,
-        createdByEmployeeId: employeeRow?.id ?? null,
       })),
     );
   });

@@ -2,7 +2,7 @@ import "server-only";
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/supabase/migrations/schema";
 
@@ -38,7 +38,7 @@ export async function getAuthenticatedProfile() {
   const [profile] = await db
     .select()
     .from(users)
-    .where(eq(users.authUserId, data.user.id))
+    .where(and(eq(users.authUserId, data.user.id), isNull(users.deletedAt)))
     .limit(1);
 
   if (!profile) {

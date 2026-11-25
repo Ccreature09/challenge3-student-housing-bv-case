@@ -3,7 +3,7 @@
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { getCleaningDashboardPath } from "@/app/actions/cleaning";
+import { getHousingDashboardPath } from "@/app/actions/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,7 +34,19 @@ export default function LoginPage() {
       });
       if (signInError) throw new Error(signInError.message);
 
-      const path = await getCleaningDashboardPath();
+      let path: string;
+      try {
+        path = await getHousingDashboardPath();
+      } catch (profileError) {
+        const { error: signOutError } = await supabase.auth.signOut();
+        if (signOutError) {
+          throw new Error(
+            `${profileError instanceof Error ? profileError.message : "This account does not have access to a dashboard."} Could not end the session: ${signOutError.message}`,
+          );
+        }
+        throw profileError;
+      }
+
       router.replace(path);
       router.refresh();
     } catch (signInError) {
@@ -49,82 +61,80 @@ export default function LoginPage() {
 
   return (
     <>
-    
-    <div className="flex flex-col items-center mb-12 bg-white-400 font-bold text-black">
-      <header className="flex flex-col items-center gap-2 ">
-        <img
-          src="/images/lightlogo.png"
-          alt="logo"
-          width="600"
-          height="400"
-        />
-        <p className="mb-1">Your ideal Housing Management Platform</p>
-      </header>
-    </div>
+      <div className="flex flex-col items-center mb-12 bg-white-400 font-bold text-black">
+        <header className="flex flex-col items-center gap-2 ">
+          <img
+            src="/images/lightlogo.png"
+            alt="logo"
+            width="600"
+            height="400"
+          />
+          <p className="mb-1">Your ideal Housing Management Platform</p>
+        </header>
+      </div>
 
-    <main className="flex items-center justify-center bg-white-200 px-4 py-5">
-      <form
-        onSubmit={signIn}
-        className="w-full max-w-md space-y-5 rounded-4xl border border-blue-400 bg-white p-8 shadow-sm"
-      >
-        <div>
-          <h1 className="text-2xl font-semibold text-stone-900">Sign in</h1>
-          <p className="mt-1 text-sm text-stone-600">
-            Use your housing account to log in.
-          </p>
-        </div>
-        {error && (
-          <p
-            role="alert"
-            className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
-          >
-            {error}
-          </p>
-        )}
-        <div>
-          <label
-            htmlFor="email"
-            className="mb-2 block text-sm font-semibold text-stone-800"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="h-11 w-full rounded-lg border border-stone-400 px-3 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-teal-700/40"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="password"
-            className="mb-2 block text-sm font-semibold text-stone-800"
-          >
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="h-11 w-full rounded-lg border border-stone-400 px-3 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-teal-700/40"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-lg bg-teal-700 px-5 py-3 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+      <main className="flex items-center justify-center bg-white-200 px-4 py-5">
+        <form
+          onSubmit={signIn}
+          className="w-full max-w-md space-y-5 rounded-4xl border border-blue-400 bg-white p-8 shadow-sm"
         >
-          {submitting ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
-    </main>
+          <div>
+            <h1 className="text-2xl font-semibold text-stone-900">Sign in</h1>
+            <p className="mt-1 text-sm text-stone-600">
+              Use your housing account to log in.
+            </p>
+          </div>
+          {error && (
+            <p
+              role="alert"
+              className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
+            >
+              {error}
+            </p>
+          )}
+          <div>
+            <label
+              htmlFor="email"
+              className="mb-2 block text-sm font-semibold text-stone-800"
+            >
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="h-11 w-full rounded-lg border border-stone-400 px-3 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-teal-700/40"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="password"
+              className="mb-2 block text-sm font-semibold text-stone-800"
+            >
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="h-11 w-full rounded-lg border border-stone-400 px-3 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-teal-700/40"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full rounded-lg bg-teal-700 px-5 py-3 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+          >
+            {submitting ? "Signing in…" : "Sign in"}
+          </button>
+        </form>
+      </main>
     </>
   );
-  
 }
