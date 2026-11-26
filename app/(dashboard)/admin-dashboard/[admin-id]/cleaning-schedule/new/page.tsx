@@ -33,7 +33,7 @@ function NewCleaningTaskForm() {
   const adminId = params["admin-id"];
   const searchParams = useSearchParams();
   const router = useRouter();
-  const listUrl = `/admin-dashboard/${adminId}/cleaning-schedule`;
+  const listUrl = `/admin-dashboard/${adminId}/home`;
   const [data, setData] = useState<AdminData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -119,7 +119,7 @@ function NewCleaningTaskForm() {
   return (
     <div className="flex-1 bg-stone-100">
       <div className="flex items-center gap-4 border-b bg-white px-6 py-4">
-        <Link href={listUrl} aria-label="Back to cleaning schedule" className="rounded-lg p-2 text-stone-900 hover:bg-stone-100">
+        <Link href={listUrl} aria-label="Back to dashboard" className="rounded-lg p-2 text-stone-900 hover:bg-stone-100">
           <ChevronLeft className="size-5" />
         </Link>
         <h2 className="text-2xl font-semibold text-stone-900">New cleaning task</h2>

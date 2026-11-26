@@ -56,8 +56,7 @@ function landlordNavItems(adminId: string) {
   const base = `/admin-dashboard/${adminId}`;
   return [
     { title: "Dashboard", url: base, icon: LayoutDashboard },
-    { title: "Calendar", url: `${base}/calendar`, icon: Calendar },
-    { title: "Cleaning schedule", url: `${base}/cleaning-schedule`, icon: Sparkles },
+    { title: "Cleaning schedule", url: `${base}/cleaning-schedule/new`, icon: Sparkles },
     { title: "Maintenance and repairs", url: `${base}/maintenence`, icon: Wrench },
     { title: "Announcements", url: `${base}/announcements`, icon: Megaphone },
     { title: "Tenants", url: `${base}/tenants`, icon: Users },
@@ -69,7 +68,6 @@ function tenantNavItems(houseId: string) {
   return [
     { title: "Home", url: "#", icon: Home },
     { title: "Inbox", url: "#", icon: Inbox },
-    { title: "Cleaning schedule", url: `${base}/cleaning-schedule`, icon: Sparkles },
     { title: "Maintenance", url: `${base}/maintenance`, icon: Wrench },
     { title: "Settings", url: "#", icon: Settings },
   ];
