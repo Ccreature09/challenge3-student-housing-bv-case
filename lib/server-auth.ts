@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/supabase/migrations/schema";
+import { UserError } from "@/lib/action-result";
 
 export async function getAuthenticatedProfile() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -32,8 +33,8 @@ export async function getAuthenticatedProfile() {
   });
 
   const { data, error } = await supabase.auth.getUser();
-  if (error) throw new Error(`Could not verify the Supabase session: ${error.message}`);
-  if (!data.user) throw new Error("Sign in to access cleaning schedules.");
+  if (error) throw new UserError("Your session has expired. Please sign in again.");
+  if (!data.user) throw new UserError("Please sign in first.");
 
   const [profile] = await db
     .select()
@@ -42,8 +43,20 @@ export async function getAuthenticatedProfile() {
     .limit(1);
 
   if (!profile) {
-    throw new Error("Your Supabase account is not linked to a housing profile.");
+    throw new UserError("Your Supabase account is not linked to a housing profile.");
   }
 
+  return profile;
+}
+
+/** The signed-in admin, who must own the admin dashboard in the URL. */
+export async function requireAdmin(adminId: string) {
+  const profile = await getAuthenticatedProfile();
+  if (profile.role !== "admin") {
+    throw new UserError("Only admins can use the admin dashboard.");
+  }
+  if (adminId !== profile.id) {
+    throw new UserError("This admin dashboard does not belong to your account.");
+  }
   return profile;
 }

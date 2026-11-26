@@ -5,12 +5,15 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createBrowserClient } from "@supabase/ssr";
 import {
+  BedDouble,
+  Building2,
   Calendar,
   ChevronUp,
+  Hammer,
   Home,
   Inbox,
   LayoutDashboard,
-  Megaphone,
+  MessageSquareWarning,
   Search,
   Settings,
   Sparkles,
@@ -18,6 +21,9 @@ import {
   Users,
   Wrench,
 } from "lucide-react";
+import { getMyProfile } from "@/app/actions/auth";
+import { Modal } from "@/components/admin/modal";
+import { ChangePasswordForm } from "@/components/change-password-form";
 
 import {
   Sidebar,
@@ -52,41 +58,55 @@ const navItems = [
   { title: "Settings", url: "#", icon: Settings },
 ];
 
-function landlordNavItems(adminId: string) {
+function landlordNavItems(adminId: string, houseId?: string) {
   const base = `/admin-dashboard/${adminId}`;
-  return [
-    { title: "Dashboard", url: base, icon: LayoutDashboard },
-    { title: "Cleaning schedule", url: `${base}/cleaning-schedule/new`, icon: Sparkles },
-    { title: "Maintenance and repairs", url: `${base}/maintenence`, icon: Wrench },
-    { title: "Announcements", url: `${base}/announcements`, icon: Megaphone },
-    { title: "Tenants", url: `${base}/tenants`, icon: Users },
+  const items = [
+    { title: "Dashboard", url: `${base}/home`, icon: LayoutDashboard },
+    { title: "Users", url: `${base}/users`, icon: Users },
   ];
+  if (houseId) {
+    const house = `${base}/houses/${houseId}`;
+    items.push(
+      { title: "Accommodation", url: house, icon: Building2 },
+      { title: "Maintenance", url: `${house}/maintenance`, icon: Wrench },
+      { title: "Cleaning schedule", url: `${house}/cleaning`, icon: Sparkles },
+    );
+  }
+  return items;
 }
 
 function tenantNavItems(houseId: string) {
   const base = `/tenant-dashboard/${houseId}`;
   return [
-    { title: "Home", url: "#", icon: Home },
-    { title: "Inbox", url: "#", icon: Inbox },
-    { title: "Maintenance", url: `${base}/maintenance`, icon: Wrench },
-    { title: "Settings", url: "#", icon: Settings },
+    { title: "My house", url: `${base}/home`, icon: Home },
+    { title: "My room", url: `${base}/room`, icon: BedDouble },
+    { title: "House maintenance", url: `${base}/maintenance`, icon: Wrench },
+    { title: "Room repairs", url: `${base}/room/maintenance`, icon: Hammer },
+    { title: "Complaints", url: `${base}/complaints`, icon: MessageSquareWarning },
   ];
 }
 
 // Reading the URL must happen inside <Suspense> because cacheComponents is enabled.
 function RoleLabel() {
-  const adminId = useParams<{ "admin-id"?: string }>()["admin-id"];
-  if (!adminId) return null;
-  return <span className="text-xs text-muted-foreground">Landlord</span>;
+  const params = useParams<{ "admin-id"?: string; house_id?: string }>();
+  if (params["admin-id"]) return <span className="text-xs text-muted-foreground">Landlord</span>;
+  if (params.house_id) return <span className="text-xs text-muted-foreground">Tenant</span>;
+  return null;
+}
+
+function supabaseBrowser() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  return url && key ? createBrowserClient(url, key) : null;
 }
 
 function NavItems() {
   const pathname = usePathname();
-  const params = useParams<{ "admin-id"?: string; house_id?: string }>();
+  const params = useParams<{ "admin-id"?: string; "house-id"?: string; house_id?: string }>();
   const adminId = params["admin-id"];
   const houseId = params.house_id;
   const items = adminId
-    ? landlordNavItems(adminId)
+    ? landlordNavItems(adminId, params["house-id"])
     : houseId
       ? tenantNavItems(houseId)
       : navItems;
@@ -95,10 +115,7 @@ function NavItems() {
     <SidebarMenuItem key={item.title}>
       <SidebarMenuButton
         tooltip={item.title}
-        isActive={
-          pathname === item.url ||
-          (item.url.split("/").length > 3 && pathname.startsWith(`${item.url}/`))
-        }
+        isActive={pathname === item.url}
         render={<a href={item.url} />}
       >
         <item.icon />
@@ -111,6 +128,25 @@ function NavItems() {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const [authError, setAuthError] = React.useState("");
+  const [name, setName] = React.useState("");
+  const [passwordOpen, setPasswordOpen] = React.useState(false);
+  // An account still on its temporary password must change it before using the app.
+  const [mustChange, setMustChange] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    void getMyProfile().then((result) => {
+      if (!cancelled && result.ok) setName(result.data.name);
+    });
+    void supabaseBrowser()
+      ?.auth.getUser()
+      .then(({ data }) => {
+        if (!cancelled && data.user?.user_metadata?.must_change_password) setMustChange(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function signOut() {
     setAuthError("");
@@ -174,7 +210,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <DropdownMenu>
               <DropdownMenuTrigger render={<SidebarMenuButton />}>
                 <User2 />
-                <span>Jane Doe</span>
+                <span className="truncate">{name || "Account"}</span>
                 <ChevronUp className="ml-auto" />
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -182,11 +218,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className="w-[--radix-popper-anchor-width]"
               >
                 {authError && <p role="alert" className="px-2 py-1 text-xs text-red-700">{authError}</p>}
-                <DropdownMenuItem>
-                  <span>Account</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Billing</span>
+                <DropdownMenuItem onClick={() => setPasswordOpen(true)}>
+                  <span>Change password</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => void signOut()}>
                   <span>Sign out</span>
@@ -199,6 +232,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       {/* Rail allows clicking the edge of the sidebar to collapse/expand */}
       <SidebarRail />
+
+      <Modal
+        open={passwordOpen || mustChange}
+        onClose={() => setPasswordOpen(false)}
+        dismissible={!mustChange}
+        title={mustChange ? "Choose your own password" : "Change password"}
+        description={
+          mustChange
+            ? "You are using a temporary password from the housing office. Replace it to continue."
+            : undefined
+        }
+        size="md"
+      >
+        <ChangePasswordForm
+          onDone={() => {
+            setMustChange(false);
+            setPasswordOpen(false);
+          }}
+        />
+      </Modal>
     </Sidebar>
   );
 }
