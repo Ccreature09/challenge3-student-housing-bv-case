@@ -1,45 +1,47 @@
 import { relations } from "drizzle-orm/relations";
-import { usersInAuth, users, employees, houses, rooms, contracts, reviews, warnings, utilityBills } from "./schema";
+import { users, calendarEvents, maintenanceOrComplaints, announcements, houses, rooms, roomAssignments, usersInAuth } from "./schema";
+
+export const calendarEventsRelations = relations(calendarEvents, ({one}) => ({
+	user_assignedUserId: one(users, {
+		fields: [calendarEvents.assignedUserId],
+		references: [users.id],
+		relationName: "calendarEvents_assignedUserId_users_id"
+	}),
+	user_createdBy: one(users, {
+		fields: [calendarEvents.createdBy],
+		references: [users.id],
+		relationName: "calendarEvents_createdBy_users_id"
+	}),
+}));
 
 export const usersRelations = relations(users, ({one, many}) => ({
+	calendarEvents_assignedUserId: many(calendarEvents, {
+		relationName: "calendarEvents_assignedUserId_users_id"
+	}),
+	calendarEvents_createdBy: many(calendarEvents, {
+		relationName: "calendarEvents_createdBy_users_id"
+	}),
+	maintenanceOrComplaints: many(maintenanceOrComplaints),
+	announcements: many(announcements),
+	roomAssignments: many(roomAssignments),
 	usersInAuth: one(usersInAuth, {
 		fields: [users.authUserId],
 		references: [usersInAuth.id]
 	}),
-	employees: many(employees),
-	contracts: many(contracts),
-	warnings: many(warnings),
 }));
 
-export const usersInAuthRelations = relations(usersInAuth, ({many}) => ({
-	users: many(users),
-}));
-
-export const employeesRelations = relations(employees, ({one, many}) => ({
-	employee: one(employees, {
-		fields: [employees.managerId],
-		references: [employees.id],
-		relationName: "employees_managerId_employees_id"
-	}),
-	employees: many(employees, {
-		relationName: "employees_managerId_employees_id"
-	}),
+export const maintenanceOrComplaintsRelations = relations(maintenanceOrComplaints, ({one}) => ({
 	user: one(users, {
-		fields: [employees.userId],
+		fields: [maintenanceOrComplaints.submittedBy],
 		references: [users.id]
 	}),
-	house: one(houses, {
-		fields: [employees.workHouseId],
-		references: [houses.id]
-	}),
-	contracts: many(contracts),
-	warnings: many(warnings),
 }));
 
-export const housesRelations = relations(houses, ({many}) => ({
-	employees: many(employees),
-	rooms: many(rooms),
-	utilityBills: many(utilityBills),
+export const announcementsRelations = relations(announcements, ({one}) => ({
+	user: one(users, {
+		fields: [announcements.createdBy],
+		references: [users.id]
+	}),
 }));
 
 export const roomsRelations = relations(rooms, ({one, many}) => ({
@@ -47,46 +49,24 @@ export const roomsRelations = relations(rooms, ({one, many}) => ({
 		fields: [rooms.houseId],
 		references: [houses.id]
 	}),
-	contracts: many(contracts),
+	roomAssignments: many(roomAssignments),
 }));
 
-export const contractsRelations = relations(contracts, ({one, many}) => ({
-	employee: one(employees, {
-		fields: [contracts.createdByEmployeeId],
-		references: [employees.id]
-	}),
+export const housesRelations = relations(houses, ({many}) => ({
+	rooms: many(rooms),
+}));
+
+export const roomAssignmentsRelations = relations(roomAssignments, ({one}) => ({
 	room: one(rooms, {
-		fields: [contracts.roomId],
+		fields: [roomAssignments.roomId],
 		references: [rooms.id]
 	}),
 	user: one(users, {
-		fields: [contracts.tenantId],
-		references: [users.id]
-	}),
-	reviews: many(reviews),
-}));
-
-export const reviewsRelations = relations(reviews, ({one}) => ({
-	contract: one(contracts, {
-		fields: [reviews.contractId],
-		references: [contracts.id]
-	}),
-}));
-
-export const warningsRelations = relations(warnings, ({one}) => ({
-	employee: one(employees, {
-		fields: [warnings.issuedByEmployeeId],
-		references: [employees.id]
-	}),
-	user: one(users, {
-		fields: [warnings.tenantId],
+		fields: [roomAssignments.studentId],
 		references: [users.id]
 	}),
 }));
 
-export const utilityBillsRelations = relations(utilityBills, ({one}) => ({
-	house: one(houses, {
-		fields: [utilityBills.houseId],
-		references: [houses.id]
-	}),
+export const usersInAuthRelations = relations(usersInAuth, ({many}) => ({
+	users: many(users),
 }));
