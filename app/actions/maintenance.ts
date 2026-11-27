@@ -1,6 +1,5 @@
 "use server";
 
-<<<<<<< HEAD
 import { revalidatePath } from "next/cache";
 import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
@@ -96,7 +95,9 @@ function formatHouseLabel(house: {
   houseNumber: string;
   city: string | null;
 }) {
-  const streetPart = [house.street, house.houseNumber].filter(Boolean).join(" ");
+  const streetPart = [house.street, house.houseNumber]
+    .filter(Boolean)
+    .join(" ");
   return [streetPart, house.city].filter(Boolean).join(", ");
 }
 
@@ -265,7 +266,10 @@ function buildMaintenanceDTO(
     ? `${locationInfo.houseName} - Room ${String(locationInfo.roomNumber).padStart(3, "0")}`
     : "Unspecified";
 
-  const fullName = [row.firstName, row.lastName].filter(Boolean).join(" ").trim();
+  const fullName = [row.firstName, row.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
 
   return {
     id: row.id,
@@ -336,8 +340,7 @@ async function parsePhotoBuffer(
 }
 
 function extractCreateFields(input: CreateMaintenanceInput | FormData) {
-  const rawTitle =
-    input instanceof FormData ? input.get("title") : input.title;
+  const rawTitle = input instanceof FormData ? input.get("title") : input.title;
   const rawLocation =
     input instanceof FormData ? input.get("location") : input.location;
   const rawDescription =
@@ -702,7 +705,9 @@ export async function updateAdminMaintenanceRequest(
   assertUuid(requestId, "request");
 
   if (!VALID_STATUSES.includes(input.status)) {
-    throw new Error("Choose a valid status: Submitted, In progress, or Resolved.");
+    throw new Error(
+      "Choose a valid status: Submitted, In progress, or Resolved.",
+    );
   }
 
   if (input.response !== undefined && input.response.length > 2000) {
@@ -783,70 +788,4 @@ export async function deleteAdminMaintenanceRequest(
 
   revalidatePath(`/admin-dashboard/${adminId}/maintenance`);
   return { id: requestId };
-=======
-import { and, eq } from "drizzle-orm";
-import { db } from "@/db";
-import { requireAdmin } from "@/lib/server-auth";
-import { runAction, UserError } from "@/lib/action-result";
-import { oneOf, requireUuid, text } from "@/lib/validation";
-import {
-  insertMaintenance,
-  MAINTENANCE_STATUSES,
-  maintenanceScopeFilter,
-  requireMaintenanceScope,
-  selectMaintenance,
-} from "@/lib/maintenance-queries";
-import { maintenanceOrComplaints } from "@/supabase/migrations/schema";
-
-export type { MaintenanceRow, MaintenanceStatus } from "@/lib/maintenance-queries";
-
-export async function listMaintenance(adminId: string, houseId: string, roomId: string | null) {
-  return runAction(async () => {
-    await requireAdmin(adminId);
-    const scopeTitle = await requireMaintenanceScope(houseId, roomId);
-    return { scopeTitle, requests: await selectMaintenance(houseId, roomId) };
-  });
-}
-
-export async function createMaintenance(
-  adminId: string,
-  houseId: string,
-  roomId: string | null,
-  input: { title: string; location: string; description: string },
-) {
-  return runAction(async () => {
-    const admin = await requireAdmin(adminId);
-    await requireMaintenanceScope(houseId, roomId);
-    await insertMaintenance(houseId, roomId, admin.id, input);
-    return null;
-  });
-}
-
-export async function updateMaintenance(
-  adminId: string,
-  houseId: string,
-  roomId: string | null,
-  requestId: string,
-  input: { status: string; response: string },
-) {
-  return runAction(async () => {
-    await requireAdmin(adminId);
-    await requireMaintenanceScope(houseId, roomId);
-    requireUuid(requestId, "request");
-    const status = oneOf(input.status, MAINTENANCE_STATUSES, "status");
-    const now = new Date().toISOString();
-    const updated = await db
-      .update(maintenanceOrComplaints)
-      .set({
-        status,
-        response: text(input.response, "Response", 5000, { optional: true }),
-        updatedAt: now,
-        resolvedAt: status === "Resolved" ? now : null,
-      })
-      .where(and(eq(maintenanceOrComplaints.id, requestId), maintenanceScopeFilter(houseId, roomId)))
-      .returning({ id: maintenanceOrComplaints.id });
-    if (updated.length === 0) throw new UserError("This request no longer exists.");
-    return null;
-  });
->>>>>>> 28c2f6541a954955922e2a3fc68b5f390795a912
 }
