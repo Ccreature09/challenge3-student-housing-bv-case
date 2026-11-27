@@ -1,15 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react"
-import { useParams } from "next/navigation"
-import { Camera, Lightbulb } from "lucide-react"
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useParams } from "next/navigation";
+import { Camera, Lightbulb } from "lucide-react";
 import {
   createMaintenanceRequest,
   getTenantMaintenanceRequests,
   type MaintenanceFilter,
   type MaintenanceRequestDTO,
-} from "@/app/actions/maintenance"
-import { Button } from "@/components/ui/button"
+} from "@/app/actions/maintenance";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -17,133 +17,133 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
-type View = "requests" | "report"
+type View = "requests" | "report";
 
 const filters: MaintenanceFilter[] = [
   "All",
   "Submitted",
   "In progress",
   "Resolved",
-]
+];
 
-const line = "border-b border-solid border-sky-300"
+const line = "border-b border-solid border-sky-300";
 
 const fieldStyle = [
   "w-full rounded-lg border border-sky-400 bg-white px-3 py-2 text-sm",
   "outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-200",
-].join(" ")
+].join(" ");
 
 const filterOn = [
   "rounded-full border-sky-500 px-6 uppercase",
   "bg-sky-500 text-white hover:bg-sky-600 hover:text-white",
-].join(" ")
+].join(" ");
 
 const filterOff = [
   "rounded-full border-sky-400 px-6 uppercase",
   "text-sky-700 hover:bg-sky-50 hover:text-sky-800",
-].join(" ")
+].join(" ");
 
 function formatSubmittedDate(isoString: string) {
-  const date = new Date(isoString)
-  if (Number.isNaN(date.getTime())) return isoString
-  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return isoString;
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
 export default function MaintenancePage() {
-  const params = useParams<{ house_id: string }>()
-  const houseId = params.house_id
+  const params = useParams<{ house_id: string }>();
+  const houseId = params.house_id;
 
-  const [view, setView] = useState<View>("requests")
-  const [requests, setRequests] = useState<MaintenanceRequestDTO[]>([])
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState("")
-  const [filter, setFilter] = useState<MaintenanceFilter>("All")
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [view, setView] = useState<View>("requests");
+  const [requests, setRequests] = useState<MaintenanceRequestDTO[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [filter, setFilter] = useState<MaintenanceFilter>("All");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [title, setTitle] = useState("")
-  const [location, setLocation] = useState("")
-  const [description, setDescription] = useState("")
-  const [photo, setPhoto] = useState<File | null>(null)
-  const [error, setError] = useState("")
-  const [submitting, setSubmitting] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [title, setTitle] = useState("");
+  const [location, setLocation] = useState("");
+  const [description, setDescription] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const loadRequests = useCallback(async () => {
-    setLoading(true)
-    setLoadError("")
+    setLoading(true);
+    setLoadError("");
     try {
-      const data = await getTenantMaintenanceRequests(houseId)
-      setRequests(data)
+      const data = await getTenantMaintenanceRequests(houseId);
+      setRequests(data);
     } catch (err) {
       setLoadError(
         err instanceof Error
           ? err.message
           : "Could not load your maintenance requests.",
-      )
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [houseId])
+  }, [houseId]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => void loadRequests(), 0)
-    return () => window.clearTimeout(timer)
-  }, [loadRequests])
+    const timer = window.setTimeout(() => void loadRequests(), 0);
+    return () => window.clearTimeout(timer);
+  }, [loadRequests]);
 
   const shown =
-    filter === "All" ? requests : requests.filter((r) => r.status === filter)
-  const selected = requests.find((r) => r.id === selectedId) ?? null
+    filter === "All" ? requests : requests.filter((r) => r.status === filter);
+  const selected = requests.find((r) => r.id === selectedId) ?? null;
 
   function resetForm() {
-    setTitle("")
-    setLocation("")
-    setDescription("")
-    setPhoto(null)
-    if (fileRef.current) fileRef.current.value = ""
-    setError("")
+    setTitle("");
+    setLocation("");
+    setDescription("");
+    setPhoto(null);
+    if (fileRef.current) fileRef.current.value = "";
+    setError("");
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault();
 
-    const missing: string[] = []
-    if (!title.trim()) missing.push("Title")
-    if (!location.trim()) missing.push("Location")
-    if (!description.trim()) missing.push("Description")
+    const missing: string[] = [];
+    if (!title.trim()) missing.push("Title");
+    if (!location.trim()) missing.push("Location");
+    if (!description.trim()) missing.push("Description");
 
     if (missing.length > 0) {
-      setError("Please fill in: " + missing.join(", "))
-      return
+      setError("Please fill in: " + missing.join(", "));
+      return;
     }
 
-    setSubmitting(true)
-    setError("")
+    setSubmitting(true);
+    setError("");
 
     try {
-      const formData = new FormData()
-      formData.append("title", title.trim())
-      formData.append("location", location.trim())
-      formData.append("description", description.trim())
+      const formData = new FormData();
+      formData.append("title", title.trim());
+      formData.append("location", location.trim());
+      formData.append("description", description.trim());
       if (photo) {
-        formData.append("photo", photo)
+        formData.append("photo", photo);
       }
 
-      const created = await createMaintenanceRequest(houseId, formData)
-      setRequests((prev) => [created, ...prev])
-      resetForm()
-      setFilter("All")
-      setSelectedId(null)
-      setView("requests")
+      const created = await createMaintenanceRequest(houseId, formData);
+      setRequests((prev) => [created, ...prev]);
+      resetForm();
+      setFilter("All");
+      setSelectedId(null);
+      setView("requests");
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
           : "Could not submit your maintenance request.",
-      )
+      );
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
@@ -161,8 +161,8 @@ export default function MaintenancePage() {
             <Button
               variant="outline"
               onClick={() => {
-                setSelectedId(null)
-                setView("report")
+                setSelectedId(null);
+                setView("report");
               }}
               className="h-16 rounded-2xl border-2 border-sky-400 px-8 text-lg text-sky-700 hover:bg-sky-50 hover:text-sky-800"
             >
@@ -172,8 +172,8 @@ export default function MaintenancePage() {
             <Button
               variant="outline"
               onClick={() => {
-                resetForm()
-                setView("requests")
+                resetForm();
+                setView("requests");
               }}
               className="h-16 rounded-2xl border-2 border-sky-400 px-8 text-lg text-sky-700 hover:bg-sky-50 hover:text-sky-800"
             >
@@ -195,8 +195,8 @@ export default function MaintenancePage() {
                 key={f}
                 variant="outline"
                 onClick={() => {
-                  setFilter(f)
-                  setSelectedId(null)
+                  setFilter(f);
+                  setSelectedId(null);
                 }}
                 className={filter === f ? filterOn : filterOff}
               >
@@ -250,7 +250,9 @@ export default function MaintenancePage() {
                       <TableCell>{index + 1}</TableCell>
                       <TableCell className="font-medium">{r.title}</TableCell>
                       <TableCell>{r.location}</TableCell>
-                      <TableCell>{formatSubmittedDate(r.submittedAt)}</TableCell>
+                      <TableCell>
+                        {formatSubmittedDate(r.submittedAt)}
+                      </TableCell>
                       <TableCell>
                         <span className="inline-block rounded-full border border-sky-400 px-6 py-2 text-sm text-sky-800">
                           {r.status}
@@ -409,5 +411,5 @@ export default function MaintenancePage() {
         </form>
       )}
     </div>
-  )
+  );
 }
