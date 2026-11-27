@@ -1,23 +1,32 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { useParams } from "next/navigation"
 import { Camera, Lightbulb } from "lucide-react"
+import {
+  createMaintenanceRequest,
+  getTenantMaintenanceRequests,
+  type MaintenanceFilter,
+  type MaintenanceRequestDTO,
+} from "@/app/actions/maintenance"
 import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
-type Status = "Submitted" | "In progress" | "Resolved"
-type Filter = "All" | Status
 type View = "requests" | "report"
 
-type Request = {
-  id: number
-  title: string
-  location: string
-  submitted: string
-  status: Status
-}
-
-const filters: Filter[] = ["All", "Submitted", "In progress", "Resolved"]
+const filters: MaintenanceFilter[] = [
+  "All",
+  "Submitted",
+  "In progress",
+  "Resolved",
+]
 
 const line = "border-b border-solid border-sky-300"
 
@@ -36,12 +45,22 @@ const filterOff = [
   "text-sky-700 hover:bg-sky-50 hover:text-sky-800",
 ].join(" ")
 
-export default function MaintenancePage() {
-  const [view, setView] = useState<View>("requests")
+function formatSubmittedDate(isoString: string) {
+  const date = new Date(isoString)
+  if (Number.isNaN(date.getTime())) return isoString
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+}
 
-  const [requests, setRequests] = useState<Request[]>([])
-  const [filter, setFilter] = useState<Filter>("All")
-  const shown = filter === "All" ? requests : requests.filter((r) => r.status === filter)
+export default function MaintenancePage() {
+  const params = useParams<{ house_id: string }>()
+  const houseId = params.house_id
+
+  const [view, setView] = useState<View>("requests")
+  const [requests, setRequests] = useState<MaintenanceRequestDTO[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
+  const [filter, setFilter] = useState<MaintenanceFilter>("All")
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const fileRef = useRef<HTMLInputElement>(null)
   const [title, setTitle] = useState("")
@@ -49,16 +68,44 @@ export default function MaintenancePage() {
   const [description, setDescription] = useState("")
   const [photo, setPhoto] = useState<File | null>(null)
   const [error, setError] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+
+  const loadRequests = useCallback(async () => {
+    setLoading(true)
+    setLoadError("")
+    try {
+      const data = await getTenantMaintenanceRequests(houseId)
+      setRequests(data)
+    } catch (err) {
+      setLoadError(
+        err instanceof Error
+          ? err.message
+          : "Could not load your maintenance requests.",
+      )
+    } finally {
+      setLoading(false)
+    }
+  }, [houseId])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadRequests(), 0)
+    return () => window.clearTimeout(timer)
+  }, [loadRequests])
+
+  const shown =
+    filter === "All" ? requests : requests.filter((r) => r.status === filter)
+  const selected = requests.find((r) => r.id === selectedId) ?? null
 
   function resetForm() {
     setTitle("")
     setLocation("")
     setDescription("")
     setPhoto(null)
+    if (fileRef.current) fileRef.current.value = ""
     setError("")
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
     const missing: string[] = []
@@ -70,18 +117,34 @@ export default function MaintenancePage() {
       setError("Please fill in: " + missing.join(", "))
       return
     }
-    const newRequest: Request = {
-      id: Math.max(0, ...requests.map((r) => r.id)) + 1,
-      title: title.trim(),
-      location: location.trim(),
-      submitted: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
-      status: "Submitted",
-    }
 
-    setRequests([newRequest, ...requests])
-    resetForm()
-    setFilter("All")
-    setView("requests")
+    setSubmitting(true)
+    setError("")
+
+    try {
+      const formData = new FormData()
+      formData.append("title", title.trim())
+      formData.append("location", location.trim())
+      formData.append("description", description.trim())
+      if (photo) {
+        formData.append("photo", photo)
+      }
+
+      const created = await createMaintenanceRequest(houseId, formData)
+      setRequests((prev) => [created, ...prev])
+      resetForm()
+      setFilter("All")
+      setSelectedId(null)
+      setView("requests")
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not submit your maintenance request.",
+      )
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -97,7 +160,10 @@ export default function MaintenancePage() {
           {view === "requests" ? (
             <Button
               variant="outline"
-              onClick={() => setView("report")}
+              onClick={() => {
+                setSelectedId(null)
+                setView("report")
+              }}
               className="h-16 rounded-2xl border-2 border-sky-400 px-8 text-lg text-sky-700 hover:bg-sky-50 hover:text-sky-800"
             >
               + new request
@@ -117,6 +183,10 @@ export default function MaintenancePage() {
         </div>
       </div>
 
+      {loadError && (
+        <div className="px-10 py-4 text-sm text-red-600">{loadError}</div>
+      )}
+
       {view === "requests" && (
         <>
           <div className={"flex flex-wrap gap-4 px-6 py-5 " + line}>
@@ -124,7 +194,10 @@ export default function MaintenancePage() {
               <Button
                 key={f}
                 variant="outline"
-                onClick={() => setFilter(f)}
+                onClick={() => {
+                  setFilter(f)
+                  setSelectedId(null)
+                }}
                 className={filter === f ? filterOn : filterOff}
               >
                 {f}
@@ -135,15 +208,26 @@ export default function MaintenancePage() {
             <Table className="text-center">
               <TableHeader className="[&_tr]:border-b [&_tr]:border-sky-300">
                 <TableRow className="hover:bg-transparent">
-                  {["#", "Title", "Location", "Submitted", "Status"].map((h) => (
-                    <TableHead key={h} className="h-16 text-center font-bold text-sky-900">
-                      {h}
-                    </TableHead>
-                  ))}
+                  {["#", "Title", "Location", "Submitted", "Status"].map(
+                    (h) => (
+                      <TableHead
+                        key={h}
+                        className="h-16 text-center font-bold text-sky-900"
+                      >
+                        {h}
+                      </TableHead>
+                    ),
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {shown.length === 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-20 text-sky-700">
+                      Loading your requests...
+                    </TableCell>
+                  </TableRow>
+                ) : shown.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-20 text-sky-700">
                       {requests.length === 0
@@ -152,12 +236,21 @@ export default function MaintenancePage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  shown.map((r) => (
-                    <TableRow key={r.id} className={"h-20 hover:bg-sky-50/60 last:border-b-0 " + line}>
-                      <TableCell>{r.id}</TableCell>
+                  shown.map((r, index) => (
+                    <TableRow
+                      key={r.id}
+                      onClick={() =>
+                        setSelectedId((prev) => (prev === r.id ? null : r.id))
+                      }
+                      className={
+                        "h-20 cursor-pointer hover:bg-sky-50/60 last:border-b-0 " +
+                        line
+                      }
+                    >
+                      <TableCell>{index + 1}</TableCell>
                       <TableCell className="font-medium">{r.title}</TableCell>
                       <TableCell>{r.location}</TableCell>
-                      <TableCell>{r.submitted}</TableCell>
+                      <TableCell>{formatSubmittedDate(r.submittedAt)}</TableCell>
                       <TableCell>
                         <span className="inline-block rounded-full border border-sky-400 px-6 py-2 text-sm text-sky-800">
                           {r.status}
@@ -169,21 +262,75 @@ export default function MaintenancePage() {
               </TableBody>
             </Table>
           </div>
+
+          {selected && (
+            <div className="mx-10 my-6 flex flex-col gap-4 rounded-3xl border-2 border-sky-300 bg-sky-50/40 p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-sky-900">
+                  {selected.title}
+                </h2>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedId(null)}
+                  className="border-sky-400 text-sky-700"
+                >
+                  Close
+                </Button>
+              </div>
+              <p className="whitespace-pre-wrap text-sm text-sky-900">
+                {selected.description}
+              </p>
+              {selected.response && (
+                <div className="rounded-xl border border-sky-300 bg-white p-4">
+                  <p className="text-xs font-semibold uppercase text-sky-700">
+                    Admin response
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-sky-900">
+                    {selected.response}
+                  </p>
+                </div>
+              )}
+              {selected.hasPhoto && selected.photoUrl && (
+                <div className="overflow-hidden rounded-2xl border border-sky-300 bg-white">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={selected.photoUrl}
+                    alt={selected.title}
+                    className="max-h-72 w-full object-contain"
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
 
       {view === "report" && (
-        <form onSubmit={handleSubmit} className="flex items-start gap-10 px-10 py-8">
+        <form
+          onSubmit={handleSubmit}
+          className="flex items-start gap-10 px-10 py-8"
+        >
           <div className="flex flex-1 flex-col gap-6">
             <div className="flex max-w-xl flex-col gap-2">
-              <label htmlFor="title" className="text-sm font-semibold text-sky-900">
+              <label
+                htmlFor="title"
+                className="text-sm font-semibold text-sky-900"
+              >
                 Title <span className="text-red-500">*</span>
               </label>
-              <input id="title" value={title} onChange={(e) => setTitle(e.target.value)} className={fieldStyle} />
+              <input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className={fieldStyle}
+              />
             </div>
 
             <div className="flex max-w-xl flex-col gap-2">
-              <label htmlFor="location" className="text-sm font-semibold text-sky-900">
+              <label
+                htmlFor="location"
+                className="text-sm font-semibold text-sky-900"
+              >
                 Location <span className="text-red-500">*</span>
               </label>
               <input
@@ -196,7 +343,10 @@ export default function MaintenancePage() {
             </div>
 
             <div className="flex max-w-xl flex-col gap-2">
-              <label htmlFor="description" className="text-sm font-semibold text-sky-900">
+              <label
+                htmlFor="description"
+                className="text-sm font-semibold text-sky-900"
+              >
                 Description <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -209,7 +359,10 @@ export default function MaintenancePage() {
             </div>
 
             <div className="flex max-w-xl items-center gap-5 rounded-3xl border-2 border-sky-300 bg-sky-50 p-6">
-              <Camera className="size-16 shrink-0 text-sky-400" strokeWidth={1.5} />
+              <Camera
+                className="size-16 shrink-0 text-sky-400"
+                strokeWidth={1.5}
+              />
               <div className="flex flex-col items-start gap-2">
                 <input
                   ref={fileRef}
@@ -226,7 +379,9 @@ export default function MaintenancePage() {
                 >
                   Add photo
                 </Button>
-                <span className="text-xs text-sky-700">{photo ? photo.name : "Optional"}</span>
+                <span className="text-xs text-sky-700">
+                  {photo ? photo.name : "Optional"}
+                </span>
               </div>
             </div>
 
@@ -235,19 +390,20 @@ export default function MaintenancePage() {
             <div className="flex max-w-xl justify-end">
               <Button
                 type="submit"
-                className="h-12 rounded-xl bg-sky-500 px-8 text-base text-white hover:bg-sky-600"
+                disabled={submitting}
+                className="h-12 rounded-xl bg-sky-500 px-8 text-base text-white hover:bg-sky-600 disabled:opacity-60"
               >
-                Submit request
+                {submitting ? "Submitting..." : "Submit request"}
               </Button>
             </div>
           </div>
 
-         
-          <div className="flex w-80 shrink-0 items-start gap-3 rounded-2xl border border-sky-300 bg-sky-50 p-4 text-чд text-sky-900">
+          <div className="flex w-80 shrink-0 items-start gap-3 rounded-2xl border border-sky-300 bg-sky-50 p-4 text-sm text-sky-900">
             <Lightbulb className="size-5 shrink-0 text-sky-500" />
             <p>
-              <span className="font-semibold">Tip:</span> describe the problem as clearly as you can
-              and mention the exact place. A photo helps us fix it faster.
+              <span className="font-semibold">Tip:</span> describe the problem
+              as clearly as you can and mention the exact place. A photo helps
+              us fix it faster.
             </p>
           </div>
         </form>
