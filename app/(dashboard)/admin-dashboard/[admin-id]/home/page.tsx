@@ -45,13 +45,13 @@ function AdminHome() {
         description="Fill in the first row and press + to add an accommodation. Click a row to open it."
         size="xl"
       >
-        {open && <AccommodationsTable adminId={adminId} base={base} />}
+        {open && <AccommodationsTable adminId={adminId} base={base} onNavigate={() => setOpen(false)} />}
       </Modal>
     </main>
   );
 }
 
-function AccommodationsTable({ adminId, base }: { adminId: string; base: string }) {
+function AccommodationsTable({ adminId, base, onNavigate }: { adminId: string; base: string; onNavigate: () => void }) {
   const router = useRouter();
   const load = useCallback(() => listHouses(adminId), [adminId]);
   const { data, error, loading, reload } = useActionData(load);
@@ -60,7 +60,7 @@ function AccommodationsTable({ adminId, base }: { adminId: string; base: string 
     {
       key: "street",
       header: "Street",
-      render: (row) => <span className="font-medium text-stone-900">{row.street}</span>,
+      render: (row) => <span className="font-medium text-foreground">{row.street}</span>,
       sortValue: (row) => row.street,
       create: { name: "street", label: "Street", required: true },
     },
@@ -105,7 +105,7 @@ function AccommodationsTable({ adminId, base }: { adminId: string; base: string 
 
   const cities = [...new Set((data ?? []).map((row) => row.city).filter(Boolean))].sort();
 
-  if (loading) return <p className="text-sm text-stone-600">Loading accommodations…</p>;
+  if (loading) return <p className="text-sm text-muted-foreground">Loading accommodations…</p>;
   if (!data) return <p role="alert" className="text-sm text-red-700">{error}</p>;
 
   return (
@@ -152,7 +152,10 @@ function AccommodationsTable({ adminId, base }: { adminId: string; base: string 
           await reload();
           return null;
         }}
-        onRowClick={(row) => router.push(`${base}/houses/${row.id}`)}
+        onRowClick={(row) => {
+          onNavigate();
+          router.push(`${base}/houses/${row.id}`);
+        }}
         rowLabel={(row) => `Open ${row.street} ${row.houseNumber}, ${row.city}`}
         emptyText="No accommodations yet. Add the first one in the row above."
       />

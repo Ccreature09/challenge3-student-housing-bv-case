@@ -12,7 +12,7 @@ import { formatDate, formatMoney, useActionData } from "@/components/admin/use-a
 type Params = { "admin-id": string; "house-id": string; "room-id": string };
 
 const fieldClass =
-  "h-10 w-full rounded-lg border border-sky-300 bg-white px-3 text-sm text-stone-900 focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-200";
+  "h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30";
 
 function RoomDashboard() {
   const params = useParams<Params>();
@@ -56,16 +56,16 @@ function RoomDashboard() {
 
   return (
     <main className="flex-1">
-      <div className="flex items-center gap-4 border-b border-sky-300 px-8 py-6">
-        <Link href={houseUrl} aria-label="Back to accommodation" className="rounded-lg p-2 text-sky-900 hover:bg-sky-50">
+      <div className="flex items-center gap-4 border-b border-border px-8 py-6">
+        <Link href={houseUrl} aria-label="Back to accommodation" className="rounded-lg p-2 text-primary hover:bg-accent">
           <ChevronLeft className="size-5" />
         </Link>
         <div>
-          <p className="text-xs font-semibold tracking-widest text-sky-700 uppercase">{room?.houseName ?? "Room"}</p>
-          <h1 className="text-2xl font-bold text-sky-900">
+          <p className="text-xs font-semibold tracking-widest text-primary/80 uppercase">{room?.houseName ?? "Room"}</p>
+          <h1 className="text-2xl font-bold text-primary">
             {room ? `Room ${room.roomNumber}` : loading ? "Loading…" : "Room"}
           </h1>
-          {room && <p className="text-sm text-stone-600">{formatMoney(room.monthlyRent)} per month</p>}
+          {room && <p className="text-sm text-muted-foreground">{formatMoney(room.monthlyRent)} per month</p>}
         </div>
       </div>
 
@@ -75,8 +75,8 @@ function RoomDashboard() {
 
       {room && (
         <div className="flex flex-col gap-8 px-8 py-8 lg:flex-row lg:items-start">
-          <section aria-labelledby="tenant-heading" className="flex-1 space-y-5 rounded-2xl border-2 border-sky-300 p-6">
-            <h2 id="tenant-heading" className="text-xl font-semibold text-sky-900">Living here</h2>
+          <section aria-labelledby="tenant-heading" className="flex-1 space-y-5 rounded-2xl border-2 border-border p-6">
+            <h2 id="tenant-heading" className="text-xl font-semibold text-primary">Living here</h2>
             {actionError && (
               <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800">{actionError}</p>
             )}
@@ -84,31 +84,31 @@ function RoomDashboard() {
             {current ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex size-14 items-center justify-center rounded-full bg-sky-100 text-sky-800">
+                  <div className="flex size-14 items-center justify-center rounded-full bg-sky-100 text-primary">
                     <UserRound className="size-7" />
                   </div>
                   <div>
-                    <p className="text-lg font-semibold text-stone-900">{current.firstName} {current.lastName}</p>
-                    <p className="text-sm text-stone-600">
+                    <p className="text-lg font-semibold text-foreground">{current.firstName} {current.lastName}</p>
+                    <p className="text-sm text-muted-foreground">
                       Since {formatDate(current.startDate)}
                       {current.endDate ? ` · until ${formatDate(current.endDate)}` : ""}
                     </p>
                   </div>
                 </div>
-                <dl className="grid gap-2 text-sm text-stone-800 sm:grid-cols-2">
+                <dl className="grid gap-2 text-sm text-foreground sm:grid-cols-2">
                   <div className="flex items-center gap-2">
-                    <Mail className="size-4 text-sky-600" aria-hidden />
+                    <Mail className="size-4 text-primary/70" aria-hidden />
                     <dt className="sr-only">Email</dt>
-                    <dd><a href={`mailto:${current.email}`} className="text-sky-700 hover:underline">{current.email}</a></dd>
+                    <dd><a href={`mailto:${current.email}`} className="text-primary/80 hover:underline">{current.email}</a></dd>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Phone className="size-4 text-sky-600" aria-hidden />
+                    <Phone className="size-4 text-primary/70" aria-hidden />
                     <dt className="sr-only">Phone</dt>
                     <dd>{current.phoneNumber ?? "No phone number"}</dd>
                   </div>
                 </dl>
-                <form onSubmit={(event) => void end(event, current.assignmentId)} className="flex flex-wrap items-end gap-3 border-t border-sky-200 pt-4">
-                  <label className="text-sm font-semibold text-sky-900">
+                <form onSubmit={(event) => void end(event, current.assignmentId)} className="flex flex-wrap items-end gap-3 border-t border-border pt-4">
+                  <label className="text-sm font-semibold text-primary">
                     End tenancy on
                     <input
                       name="endDate"
@@ -126,20 +126,20 @@ function RoomDashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-sm text-stone-600">
+                <p className="text-sm text-muted-foreground">
                   {upcoming
                     ? `Nobody lives here right now. ${upcoming.firstName} ${upcoming.lastName} moves in on ${formatDate(upcoming.startDate)}.`
                     : "This room is vacant."}
                 </p>
                 {!upcoming && (
                   room.availableTenants.length === 0 ? (
-                    <p className="text-sm text-stone-600">
+                    <p className="text-sm text-muted-foreground">
                       Every tenant already has a room.{" "}
-                      <Link href={`/admin-dashboard/${adminId}/users`} className="text-sky-700 underline">Add a tenant</Link> first.
+                      <Link href={`/admin-dashboard/${adminId}/users`} className="text-primary/80 underline">Add a tenant</Link> first.
                     </p>
                   ) : (
                     <form onSubmit={(event) => void assign(event)} className="flex flex-wrap items-end gap-3">
-                      <label className="min-w-60 flex-1 text-sm font-semibold text-sky-900">
+                      <label className="min-w-60 flex-1 text-sm font-semibold text-primary">
                         Tenant
                         <select name="studentId" required className={`${fieldClass} mt-1`}>
                           {room.availableTenants.map((tenant) => (
@@ -149,11 +149,11 @@ function RoomDashboard() {
                           ))}
                         </select>
                       </label>
-                      <label className="text-sm font-semibold text-sky-900">
+                      <label className="text-sm font-semibold text-primary">
                         Moves in on
                         <input name="startDate" type="date" required defaultValue={today} className={`${fieldClass} mt-1 w-48`} />
                       </label>
-                      <button type="submit" disabled={busy} className="h-10 rounded-lg bg-sky-600 px-5 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50">
+                      <button type="submit" disabled={busy} className="h-10 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
                         Assign tenant
                       </button>
                     </form>
@@ -163,13 +163,13 @@ function RoomDashboard() {
             )}
 
             {room.history.length > 0 && (
-              <div className="border-t border-sky-200 pt-4">
-                <h3 className="mb-2 text-sm font-semibold text-sky-900">Tenancy history</h3>
-                <ul className="space-y-1 text-sm text-stone-700">
+              <div className="border-t border-border pt-4">
+                <h3 className="mb-2 text-sm font-semibold text-primary">Tenancy history</h3>
+                <ul className="space-y-1 text-sm text-muted-foreground">
                   {room.history.map((entry) => (
                     <li key={entry.assignmentId} className="flex justify-between gap-4">
                       <span>{entry.firstName} {entry.lastName}</span>
-                      <span className="text-stone-500">
+                      <span className="text-muted-foreground">
                         {formatDate(entry.startDate)} – {entry.endDate ? formatDate(entry.endDate) : "now"}
                       </span>
                     </li>

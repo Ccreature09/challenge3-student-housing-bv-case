@@ -46,6 +46,7 @@ export async function getMyProfile() {
   return runAction(async () => {
     const profile = await getAuthenticatedProfile();
     return {
+      id: profile.id,
       name: `${profile.firstName} ${profile.lastName}`,
       role: profile.role,
       email: profile.email,

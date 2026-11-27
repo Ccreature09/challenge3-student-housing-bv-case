@@ -71,7 +71,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <div className="flex flex-col items-center mb-12 bg-white-400 font-bold text-black">
+      <div className="flex flex-col items-center mb-12 bg-card-400 font-bold text-black">
         <header className="flex flex-col items-center gap-2 ">
           <img
             src="/images/lightlogo.png"
@@ -83,14 +83,14 @@ export default function LoginPage() {
         </header>
       </div>
 
-      <main className="flex items-center justify-center bg-white-200 px-4 py-5">
+      <main className="flex items-center justify-center bg-card-200 px-4 py-5">
         {mustChangeTo ? (
-          <div className="w-full max-w-md space-y-5 rounded-4xl border border-blue-400 bg-white p-8 shadow-sm">
+          <div className="w-full max-w-md space-y-5 rounded-4xl border border-border bg-card p-8 shadow-sm">
             <div>
-              <h1 className="text-2xl font-semibold text-stone-900">
+              <h1 className="text-2xl font-semibold text-foreground">
                 Choose your own password
               </h1>
-              <p className="mt-1 text-sm text-stone-600">
+              <p className="mt-1 text-sm text-muted-foreground">
                 You signed in with a temporary password from the housing office.
                 Replace it before you continue.
               </p>
@@ -103,11 +103,11 @@ export default function LoginPage() {
         ) : (
           <form
             onSubmit={signIn}
-            className="w-full max-w-md space-y-5 rounded-4xl border border-blue-400 bg-white p-8 shadow-sm"
+            className="w-full max-w-md space-y-5 rounded-4xl border border-border bg-card p-8 shadow-sm"
           >
             <div>
-              <h1 className="text-2xl font-semibold text-stone-900">Sign in</h1>
-              <p className="mt-1 text-sm text-stone-600">
+              <h1 className="text-2xl font-semibold text-foreground">Sign in</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
                 Use your housing account to log in.
               </p>
             </div>
@@ -122,7 +122,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="mb-2 block text-sm font-semibold text-stone-800"
+                className="mb-2 block text-sm font-semibold text-foreground"
               >
                 Email
               </label>
@@ -133,13 +133,13 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className="h-11 w-full rounded-lg border border-stone-400 px-3 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-teal-700/40"
+                className="h-11 w-full rounded-lg border border-input px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
               />
             </div>
             <div>
               <label
                 htmlFor="password"
-                className="mb-2 block text-sm font-semibold text-stone-800"
+                className="mb-2 block text-sm font-semibold text-foreground"
               >
                 Password
               </label>
@@ -150,13 +150,13 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="h-11 w-full rounded-lg border border-stone-400 px-3 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-teal-700/40"
+                className="h-11 w-full rounded-lg border border-input px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
               />
             </div>
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-lg bg-teal-700 px-5 py-3 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+              className="w-full rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? "Signing in…" : "Sign in"}
             </button>

@@ -6,8 +6,10 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import {
   createCleaningTasks,
+  deleteCleaningTask,
   getHouseCleaningData,
 } from "@/app/actions/cleaning";
+import { CleaningTaskTable } from "@/components/cleaning-task-table";
 import { formatShortDate, parseISODate, toISODate } from "@/lib/cleaning-data";
 
 type HouseData = Extract<
@@ -17,8 +19,8 @@ type HouseData = Extract<
 type Repeat = "none" | "weekly" | "biweekly" | "monthly";
 
 const fieldClass =
-  "h-11 w-full rounded-lg border border-stone-400 bg-white px-3 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-teal-700/40";
-const labelClass = "mb-2 block text-sm font-semibold text-stone-800";
+  "h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40";
+const labelClass = "mb-2 block text-sm font-semibold text-foreground";
 const PREVIEW_COUNT = 4;
 
 function addRepeat(date: Date, repeat: Repeat, times: number) {
@@ -131,29 +133,55 @@ function NewCleaningTaskForm() {
   }
 
   return (
-    <div className="flex-1 bg-stone-100">
-      <div className="flex items-center gap-4 border-b bg-white px-6 py-4">
+    <div className="flex-1 bg-muted/40">
+      <div className="flex items-center gap-4 border-b bg-card px-6 py-4">
         <Link
           href={listUrl}
           aria-label="Back to accommodation"
-          className="rounded-lg p-2 text-stone-900 hover:bg-stone-100"
+          className="rounded-lg p-2 text-foreground hover:bg-muted"
         >
           <ChevronLeft className="size-5" />
         </Link>
         <div>
-          <h2 className="text-2xl font-semibold text-stone-900">
+          <h2 className="text-2xl font-semibold text-foreground">
             Cleaning schedule
           </h2>
-          {data && <p className="text-sm text-stone-600">{data.houseName}</p>}
+          {data && <p className="text-sm text-muted-foreground">{data.houseName}</p>}
         </div>
       </div>
 
+      {data && (
+        <section aria-labelledby="schedule-heading" className="space-y-4 p-6">
+          <h3 id="schedule-heading" className="text-lg font-semibold text-foreground">
+            Schedule
+          </h3>
+          <CleaningTaskTable
+            tasks={data.tasks}
+            actions={(task) => (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!window.confirm(`Delete "${task.title}" due ${formatShortDate(parseISODate(task.dueDate))}?`)) return;
+                  const result = await deleteCleaningTask(adminId, houseId, task.id);
+                  if (!result.ok) setError(result.error);
+                  await loadData();
+                }}
+                className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+              >
+                Delete
+              </button>
+            )}
+          />
+        </section>
+      )}
+
+      <h3 className="px-6 text-lg font-semibold text-foreground">Plan a new task</h3>
       <div className="flex flex-col gap-5 p-6 lg:flex-row lg:items-start">
         <form
           onSubmit={handleSubmit}
-          className="flex-1 space-y-4 rounded-xl border border-stone-300 bg-white p-6 lg:max-w-2xl"
+          className="flex-1 space-y-4 rounded-xl border border-input bg-card p-6 lg:max-w-2xl"
         >
-          <h3 className="text-lg font-semibold text-stone-900">
+          <h3 className="text-lg font-semibold text-foreground">
             New cleaning task
           </h3>
           {error && (
@@ -173,7 +201,7 @@ function NewCleaningTaskForm() {
             </p>
           )}
           {loading && (
-            <p className="text-sm text-stone-700">
+            <p className="text-sm text-muted-foreground">
               Loading shared spaces and rooms…
             </p>
           )}
@@ -266,7 +294,7 @@ function NewCleaningTaskForm() {
                   rows={3}
                   maxLength={2000}
                   placeholder="Describe the cleaning work to complete."
-                  className="w-full rounded-lg border border-stone-400 bg-white px-3 py-2 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-teal-700/40"
+                  className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                 />
@@ -309,21 +337,21 @@ function NewCleaningTaskForm() {
               <fieldset>
                 <legend className={labelClass}>Who cleans</legend>
                 <div className="space-y-1">
-                  <label className="flex items-center gap-3 py-2 text-sm text-stone-800">
+                  <label className="flex items-center gap-3 py-2 text-sm text-foreground">
                     <input
                       type="radio"
                       name="mode"
-                      className="size-4 accent-teal-700"
+                      className="size-4 accent-primary"
                       checked={mode === "rotate"}
                       onChange={() => setMode("rotate")}
                     />
                     Rotate between rooms with active tenants
                   </label>
-                  <label className="flex items-center gap-3 py-2 text-sm text-stone-800">
+                  <label className="flex items-center gap-3 py-2 text-sm text-foreground">
                     <input
                       type="radio"
                       name="mode"
-                      className="size-4 accent-teal-700"
+                      className="size-4 accent-primary"
                       checked={mode === "fixed"}
                       onChange={() => setMode("fixed")}
                     />
@@ -354,14 +382,14 @@ function NewCleaningTaskForm() {
               <div className="flex items-center justify-end gap-6 pt-2">
                 <Link
                   href={listUrl}
-                  className="text-sm font-semibold text-stone-800 underline"
+                  className="text-sm font-semibold text-foreground underline"
                 >
                   Cancel
                 </Link>
                 <button
                   type="submit"
                   disabled={saving || roomsInHouse.length === 0}
-                  className="rounded-lg bg-teal-700 px-6 py-3 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+                  className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
                   {saving ? "Creating…" : "Create task"}
                 </button>
@@ -370,36 +398,36 @@ function NewCleaningTaskForm() {
           )}
         </form>
 
-        <aside className="w-full rounded-xl border border-stone-300 bg-white p-5 lg:w-85">
-          <h3 className="text-base font-semibold text-stone-900">
+        <aside className="w-full rounded-xl border border-input bg-card p-5 lg:w-85">
+          <h3 className="text-base font-semibold text-foreground">
             Preview: next assignments
           </h3>
-          <p className="mt-2 text-xs text-stone-600">
+          <p className="mt-2 text-xs text-muted-foreground">
             {mode === "rotate"
               ? "Assignments rotate through rooms with active tenants."
               : "The selected room is assigned every time."}
           </p>
-          <ul className="mt-3 divide-y divide-stone-200 rounded-lg border border-stone-200">
+          <ul className="mt-3 divide-y divide-border rounded-lg border border-border">
             {preview.length === 0 && (
-              <li className="px-4 py-3 text-sm text-stone-500">
+              <li className="px-4 py-3 text-sm text-muted-foreground">
                 Choose a due date. The house needs rooms with active tenants.
               </li>
             )}
             {preview.map((item, index) => (
               <li
                 key={index}
-                className="flex justify-between px-4 py-3 text-sm text-stone-800"
+                className="flex justify-between px-4 py-3 text-sm text-foreground"
               >
                 <span>{formatShortDate(item.date)}</span>
                 <span
-                  className={index === 0 ? "font-semibold text-stone-900" : ""}
+                  className={index === 0 ? "font-semibold text-foreground" : ""}
                 >
                   {item.room}
                 </span>
               </li>
             ))}
           </ul>
-          <p className="mt-3 rounded-lg bg-teal-50 px-4 py-3 text-xs text-teal-900">
+          <p className="mt-3 rounded-lg bg-accent px-4 py-3 text-xs text-accent-foreground">
             Repeating schedules create the four assignments shown in this
             preview.
           </p>

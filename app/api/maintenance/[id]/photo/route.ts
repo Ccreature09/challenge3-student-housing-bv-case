@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { getAuthenticatedProfile } from "@/lib/server-auth";
-import { maintenanceOrComplaints } from "@/supabase/migrations/schema";
+import { maintenanceOrComplaints, roomAssignments, rooms } from "@/supabase/migrations/schema";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -70,6 +70,8 @@ export async function GET(
     .select({
       photo: maintenanceOrComplaints.photo,
       submittedBy: maintenanceOrComplaints.submittedBy,
+      houseId: maintenanceOrComplaints.houseId,
+      roomId: maintenanceOrComplaints.roomId,
     })
     .from(maintenanceOrComplaints)
     .where(
@@ -84,8 +86,26 @@ export async function GET(
     return NextResponse.json({ error: "Photo not found." }, { status: 404 });
   }
 
+  // Tenants see the photos they can see the request for: their own, their
+  // room's, and those of their house's shared spaces.
   const isPrivileged = profile.role === "admin" || profile.role === "staff";
-  if (!isPrivileged && row.submittedBy !== profile.id) {
+  let allowed = isPrivileged || row.submittedBy === profile.id;
+  if (!allowed && row.houseId) {
+    const [tenancy] = await db
+      .select({ roomId: rooms.id })
+      .from(roomAssignments)
+      .innerJoin(rooms, eq(rooms.id, roomAssignments.roomId))
+      .where(
+        and(
+          eq(roomAssignments.studentId, profile.id),
+          eq(rooms.houseId, row.houseId),
+          sql`${roomAssignments.startDate} <= CURRENT_DATE AND (${roomAssignments.endDate} IS NULL OR ${roomAssignments.endDate} >= CURRENT_DATE)`,
+        ),
+      )
+      .limit(1);
+    allowed = Boolean(tenancy) && (row.roomId === null || row.roomId === tenancy.roomId);
+  }
+  if (!allowed) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 

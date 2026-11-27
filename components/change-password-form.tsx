@@ -5,7 +5,7 @@ import { createBrowserClient } from "@supabase/ssr";
 
 const MIN_LENGTH = 8;
 const fieldClass =
-  "h-11 w-full rounded-lg border border-stone-400 px-3 text-sm text-stone-900 focus:outline-none focus:ring-2 focus:ring-teal-700/40";
+  "h-11 w-full rounded-lg border border-input px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40";
 
 function browserClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -67,22 +67,22 @@ export function ChangePasswordForm({
           {error}
         </p>
       )}
-      <label className="block text-sm font-semibold text-stone-800">
+      <label className="block text-sm font-semibold text-foreground">
         Current password
         <input name="current" type="password" autoComplete="current-password" required className={`${fieldClass} mt-2`} />
       </label>
-      <label className="block text-sm font-semibold text-stone-800">
+      <label className="block text-sm font-semibold text-foreground">
         New password
         <input name="next" type="password" autoComplete="new-password" required minLength={MIN_LENGTH} className={`${fieldClass} mt-2`} />
       </label>
-      <label className="block text-sm font-semibold text-stone-800">
+      <label className="block text-sm font-semibold text-foreground">
         Repeat new password
         <input name="repeat" type="password" autoComplete="new-password" required minLength={MIN_LENGTH} className={`${fieldClass} mt-2`} />
       </label>
       <button
         type="submit"
         disabled={saving}
-        className="w-full rounded-lg bg-teal-700 px-5 py-3 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+        className="w-full rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         {saving ? "Saving…" : submitLabel}
       </button>

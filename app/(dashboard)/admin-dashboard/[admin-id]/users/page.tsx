@@ -24,16 +24,17 @@ const roleOptions: { value: Role; label: string }[] = [
 ];
 
 const roleBadge: Record<Role, string> = {
-  tenant: "bg-sky-100 text-sky-900",
+  tenant: "bg-sky-100 text-primary",
   staff: "bg-amber-100 text-amber-900",
   admin: "bg-violet-100 text-violet-900",
 };
 
 const fieldClass =
-  "h-10 w-full rounded-lg border border-sky-300 bg-white px-3 text-sm text-stone-900 focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-200";
+  "h-10 w-full rounded-lg border border-border bg-card px-3 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30";
 
 function UsersPageContent() {
   const adminId = useParams<{ "admin-id": string }>()["admin-id"];
+  console.log(adminId);
   const houseFilter = useSearchParams().get("house") ?? "all";
   const load = useCallback(() => listUsers(adminId), [adminId]);
   const { data, error, loading, reload } = useActionData(load);
@@ -48,7 +49,11 @@ function UsersPageContent() {
     ),
   ].sort((a, b) => a[1].localeCompare(b[1]));
   // Opened from a house without tenants: keep that house selectable in the filter.
-  if (houseFilter !== "all" && houseFilter !== "none" && !houses.some(([id]) => id === houseFilter)) {
+  if (
+    houseFilter !== "all" &&
+    houseFilter !== "none" &&
+    !houses.some(([id]) => id === houseFilter)
+  ) {
     houses.unshift([houseFilter, "Selected accommodation"]);
   }
 
@@ -56,14 +61,18 @@ function UsersPageContent() {
     {
       key: "firstName",
       header: "First name",
-      render: (row) => <span className="font-medium text-stone-900">{row.firstName}</span>,
+      render: (row) => (
+        <span className="font-medium text-foreground">{row.firstName}</span>
+      ),
       sortValue: (row) => row.firstName,
       create: { name: "firstName", label: "First name", required: true },
     },
     {
       key: "lastName",
       header: "Last name",
-      render: (row) => <span className="font-medium text-stone-900">{row.lastName}</span>,
+      render: (row) => (
+        <span className="font-medium text-foreground">{row.lastName}</span>
+      ),
       sortValue: (row) => row.lastName,
       create: { name: "lastName", label: "Last name", required: true },
     },
@@ -85,12 +94,19 @@ function UsersPageContent() {
       key: "role",
       header: "Role",
       render: (row) => (
-        <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${roleBadge[row.role]}`}>
+        <span
+          className={`rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${roleBadge[row.role]}`}
+        >
           {row.role}
         </span>
       ),
       sortValue: (row) => row.role,
-      create: { name: "role", label: "Role", type: "select", options: roleOptions },
+      create: {
+        name: "role",
+        label: "Role",
+        type: "select",
+        options: roleOptions,
+      },
       className: "w-32",
     },
     {
@@ -119,20 +135,24 @@ function UsersPageContent() {
         row.houseId ? (
           <Link
             href={`/admin-dashboard/${adminId}/houses/${row.houseId}/rooms/${row.roomId}`}
-            className="text-sky-700 underline-offset-2 hover:underline"
+            className="text-primary/80 underline-offset-2 hover:underline"
           >
             {row.houseName}, room {row.roomNumber}
           </Link>
         ) : (
-          <span className="text-stone-400">—</span>
+          <span className="text-muted-foreground/70">—</span>
         ),
-      sortValue: (row) => (row.houseName ? `${row.houseName} ${row.roomNumber}` : null),
+      sortValue: (row) =>
+        row.houseName ? `${row.houseName} ${row.roomNumber}` : null,
     },
   ];
 
   async function remove(user: UserRow) {
-    const warning = user.houseId ? " Their current tenancy will end today." : "";
-    if (!window.confirm(`Delete ${user.firstName} ${user.lastName}?${warning}`)) return;
+    const warning = user.houseId
+      ? " Their current tenancy will end today."
+      : "";
+    if (!window.confirm(`Delete ${user.firstName} ${user.lastName}?${warning}`))
+      return;
     setActionError("");
     const result = await deleteUser(adminId, user.id);
     if (!result.ok) setActionError(result.error);
@@ -141,31 +161,41 @@ function UsersPageContent() {
 
   return (
     <div className="flex-1">
-      <div className="flex items-center gap-4 border-b border-sky-300 px-8 py-6">
+      <div className="flex items-center gap-4 border-b border-border px-8 py-6">
         <Link
           href={`/admin-dashboard/${adminId}/home`}
           aria-label="Back to dashboard"
-          className="rounded-lg p-2 text-sky-900 hover:bg-sky-50"
+          className="rounded-lg p-2 text-primary hover:bg-accent"
         >
           <ChevronLeft className="size-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-sky-900 uppercase">Users</h1>
-          <p className="text-sm text-stone-600">
-            Fill in the first row and press + to add a user. Each user gets a login with the temporary
-            password you set, and is asked to choose their own password when they first sign in.
+          <h1 className="text-2xl font-bold text-primary uppercase">Users</h1>
+          <p className="text-sm text-muted-foreground">
+            Fill in the first row and press + to add a user. Each user gets a
+            login with the temporary password you set, and is asked to choose
+            their own password when they first sign in.
           </p>
         </div>
       </div>
 
       <div className="space-y-4 px-8 py-6">
         {(actionError || (data && error)) && (
-          <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800">
+          <p
+            role="alert"
+            className="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800"
+          >
             {actionError || error}
           </p>
         )}
-        {loading && <p className="text-sm text-stone-600">Loading users…</p>}
-        {!loading && !data && <p role="alert" className="text-sm text-red-700">{error}</p>}
+        {loading && (
+          <p className="text-sm text-muted-foreground">Loading users…</p>
+        )}
+        {!loading && !data && (
+          <p role="alert" className="text-sm text-red-700">
+            {error}
+          </p>
+        )}
         {data && (
           <DataTable
             key={houseFilter}
@@ -191,7 +221,8 @@ function UsersPageContent() {
                   { value: "none", label: "Not living anywhere" },
                   ...houses.map(([value, label]) => ({ value, label })),
                 ],
-                matches: (row, value) => (value === "none" ? !row.houseId : row.houseId === value),
+                matches: (row, value) =>
+                  value === "none" ? !row.houseId : row.houseId === value,
               },
               {
                 key: "login",
@@ -205,7 +236,10 @@ function UsersPageContent() {
             ]}
             createLabel="Add user"
             onCreate={async (values) => {
-              const result = await createUser(adminId, values as UserInput & { password: string });
+              const result = await createUser(
+                adminId,
+                values as UserInput & { password: string },
+              );
               if (!result.ok) return result.error;
               await reload();
               return null;
@@ -216,7 +250,7 @@ function UsersPageContent() {
                   type="button"
                   onClick={() => setEditing(row)}
                   aria-label={`Edit ${row.firstName} ${row.lastName}`}
-                  className="rounded-lg border border-sky-300 p-2 text-sky-800 hover:bg-sky-50"
+                  className="rounded-lg border border-border p-2 text-primary hover:bg-accent"
                 >
                   <Pencil className="size-4" />
                 </button>
@@ -240,7 +274,11 @@ function UsersPageContent() {
       <Modal
         open={editing !== null}
         onClose={() => setEditing(null)}
-        title={editing ? `Edit ${editing.firstName} ${editing.lastName}` : "Edit user"}
+        title={
+          editing
+            ? `Edit ${editing.firstName} ${editing.lastName}`
+            : "Edit user"
+        }
         size="md"
       >
         {editing && (
@@ -293,26 +331,58 @@ function EditUserForm({
   return (
     <form onSubmit={submit} className="space-y-4">
       {error && (
-        <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800">
+        <p
+          role="alert"
+          className="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800"
+        >
           {error}
         </p>
       )}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="First name" name="firstName" defaultValue={user.firstName} required />
-        <Field label="Last name" name="lastName" defaultValue={user.lastName} required />
+        <Field
+          label="First name"
+          name="firstName"
+          defaultValue={user.firstName}
+          required
+        />
+        <Field
+          label="Last name"
+          name="lastName"
+          defaultValue={user.lastName}
+          required
+        />
       </div>
-      <Field label="Email" name="email" type="email" defaultValue={user.email} required />
-      <Field label="Phone (optional)" name="phoneNumber" type="tel" defaultValue={user.phoneNumber ?? ""} />
-      <label className="block text-sm font-semibold text-sky-900">
+      <Field
+        label="Email"
+        name="email"
+        type="email"
+        defaultValue={user.email}
+        required
+      />
+      <Field
+        label="Phone (optional)"
+        name="phoneNumber"
+        type="tel"
+        defaultValue={user.phoneNumber ?? ""}
+      />
+      <label className="block text-sm font-semibold text-primary">
         Role
-        <select name="role" defaultValue={user.role} className={`${fieldClass} mt-1`}>
+        <select
+          name="role"
+          defaultValue={user.role}
+          className={`${fieldClass} mt-1`}
+        >
           {roleOptions.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
           ))}
         </select>
       </label>
-      <label className="block text-sm font-semibold text-sky-900">
-        {user.hasLogin ? "Reset password (optional)" : "Password for a new login"}
+      <label className="block text-sm font-semibold text-primary">
+        {user.hasLogin
+          ? "Reset password (optional)"
+          : "Password for a new login"}
         <input
           name="password"
           type="password"
@@ -321,17 +391,25 @@ function EditUserForm({
           required={!user.hasLogin}
           className={`${fieldClass} mt-1`}
         />
-        <span className="mt-1 block text-xs font-normal text-stone-600">
+        <span className="mt-1 block text-xs font-normal text-muted-foreground">
           {user.hasLogin
             ? "Leave empty to keep the current password. A new password is temporary: the user must change it at their next sign-in."
             : "This user cannot sign in yet. Set a temporary password to create their login."}
         </span>
       </label>
       <div className="flex justify-end gap-3 pt-2">
-        <button type="button" onClick={onCancel} className="rounded-lg px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted"
+        >
           Cancel
         </button>
-        <button type="submit" disabled={saving} className="rounded-lg bg-sky-600 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50">
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
           {saving ? "Saving…" : "Save changes"}
         </button>
       </div>
@@ -353,9 +431,15 @@ function Field({
   required?: boolean;
 }) {
   return (
-    <label className="block text-sm font-semibold text-sky-900">
+    <label className="block text-sm font-semibold text-primary">
       {label}
-      <input name={name} type={type} defaultValue={defaultValue} required={required} className={`${fieldClass} mt-1`} />
+      <input
+        name={name}
+        type={type}
+        defaultValue={defaultValue}
+        required={required}
+        className={`${fieldClass} mt-1`}
+      />
     </label>
   );
 }

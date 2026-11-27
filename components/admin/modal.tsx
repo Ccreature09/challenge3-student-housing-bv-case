@@ -29,6 +29,13 @@ export function Modal({
     if (!dialog) return;
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) dialog.close();
+    // Next.js keeps a page you navigate away from mounted but hidden, and runs
+    // this cleanup when it hides it. A modal <dialog> left open makes the rest
+    // of the document inert, which froze every button on the next page, so it
+    // must be closed here (closing also tells the owner via onClose).
+    return () => {
+      if (dialog.open) dialog.close();
+    };
   }, [open]);
 
   const width = { md: "max-w-xl", lg: "max-w-4xl", xl: "max-w-6xl" }[size];
@@ -45,20 +52,20 @@ export function Modal({
         if (dismissible && event.target === ref.current) onClose();
       }}
       aria-labelledby="modal-title"
-      className={`m-auto w-[calc(100%-2rem)] ${width} rounded-2xl border border-sky-300 bg-white p-0 text-stone-900 shadow-xl backdrop:bg-sky-950/40`}
+      className={`m-auto w-[calc(100%-2rem)] ${width} rounded-2xl border border-border bg-card p-0 text-foreground shadow-xl backdrop:bg-foreground/40`}
     >
       {open && (
         <div className="flex max-h-[85vh] flex-col">
-          <div className="flex items-start justify-between gap-4 border-b border-sky-200 px-6 py-4">
+          <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
             <div>
               <h2
                 id="modal-title"
-                className="text-xl font-semibold text-sky-900"
+                className="text-xl font-semibold text-primary"
               >
                 {title}
               </h2>
               {description && (
-                <p className="mt-1 text-sm text-stone-600">{description}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{description}</p>
               )}
             </div>
             {dismissible && (
@@ -66,7 +73,7 @@ export function Modal({
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="rounded-lg p-2 text-stone-600 hover:bg-sky-50 hover:text-sky-900"
+                className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-primary"
               >
                 <X className="size-5" />
               </button>

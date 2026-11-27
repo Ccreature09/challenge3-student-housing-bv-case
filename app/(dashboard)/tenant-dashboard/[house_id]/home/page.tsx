@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useState } from "react";
 import { useParams } from "next/navigation";
-import { BedDouble, Megaphone, Users, Wrench } from "lucide-react";
+import { BedDouble, Megaphone, Sparkles, Users, Wrench } from "lucide-react";
 import { getTenantHome, listHouseAnnouncements, listHousemates } from "@/app/actions/tenant";
 import type { Priority } from "@/app/actions/announcements";
 import { Modal } from "@/components/admin/modal";
@@ -10,8 +10,8 @@ import { ModuleCard } from "@/components/admin/module-card";
 import { formatDate, useActionData } from "@/components/admin/use-action";
 
 const priorityBadge: Record<Priority, string> = {
-  low: "bg-stone-100 text-stone-700",
-  normal: "bg-sky-100 text-sky-900",
+  low: "bg-muted/40 text-muted-foreground",
+  normal: "bg-sky-100 text-primary",
   high: "bg-red-100 text-red-800",
 };
 
@@ -24,11 +24,11 @@ function TenantHome() {
 
   return (
     <main className="flex-1">
-      <div className="border-b border-sky-300 px-8 py-6">
-        <p className="text-xs font-semibold tracking-widest text-sky-700 uppercase">My house</p>
-        <h1 className="text-2xl font-bold text-sky-900">{home ? home.houseName : loading ? "Loading…" : "My house"}</h1>
+      <div className="border-b border-border px-8 py-6">
+        <p className="text-xs font-semibold tracking-widest text-primary/80 uppercase">My house</p>
+        <h1 className="text-2xl font-bold text-primary">{home ? home.houseName : loading ? "Loading…" : "My house"}</h1>
         {home && (
-          <p className="text-sm text-stone-600">
+          <p className="text-sm text-muted-foreground">
             {home.postalCode} {home.city} · Welcome, {home.firstName}. You live in room {home.roomNumber}.
           </p>
         )}
@@ -59,10 +59,18 @@ function TenantHome() {
           <ModuleCard
             label="Repairs"
             title="Maintenance"
-            description="Report and follow problems in shared areas such as the kitchen."
+            description="Report and follow problems in shared spaces such as the kitchen."
             icon={Wrench}
             badge={`${home.counts.openMaintenance} open`}
             href={`${base}/maintenance`}
+          />
+          <ModuleCard
+            label="Common spaces"
+            title="Cleaning"
+            description="Who cleans the shared spaces and when. Mark your tasks as done."
+            icon={Sparkles}
+            badge={home.counts.myOpenCleaning ? `${home.counts.myOpenCleaning} for you` : "All done"}
+            href={`${base}/cleaning`}
           />
           <ModuleCard
             label="Information"
@@ -88,23 +96,23 @@ function TenantHome() {
 function Housemates({ houseId }: { houseId: string }) {
   const load = useCallback(() => listHousemates(houseId), [houseId]);
   const { data, error, loading } = useActionData(load);
-  if (loading) return <p className="text-sm text-stone-600">Loading housemates…</p>;
+  if (loading) return <p className="text-sm text-muted-foreground">Loading housemates…</p>;
   if (!data) return <p role="alert" className="text-sm text-red-700">{error}</p>;
   return (
     <table className="w-full text-sm">
-      <thead className="text-left text-xs font-semibold text-sky-900">
-        <tr className="border-b border-sky-200">
+      <thead className="text-left text-xs font-semibold text-primary">
+        <tr className="border-b border-border">
           <th className="py-2">Room</th>
           <th className="py-2">Name</th>
         </tr>
       </thead>
       <tbody>
         {data.map((mate) => (
-          <tr key={mate.id} className="border-b border-sky-100">
-            <td className="py-2 text-stone-700">Room {mate.roomNumber}</td>
-            <td className="py-2 font-medium text-stone-900">
+          <tr key={mate.id} className="border-b border-border/60">
+            <td className="py-2 text-muted-foreground">Room {mate.roomNumber}</td>
+            <td className="py-2 font-medium text-foreground">
               {mate.firstName} {mate.lastName}
-              {mate.isMe && <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-900">You</span>}
+              {mate.isMe && <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-primary">You</span>}
             </td>
           </tr>
         ))}
@@ -116,24 +124,24 @@ function Housemates({ houseId }: { houseId: string }) {
 function Announcements({ houseId }: { houseId: string }) {
   const load = useCallback(() => listHouseAnnouncements(houseId), [houseId]);
   const { data, error, loading } = useActionData(load);
-  if (loading) return <p className="text-sm text-stone-600">Loading announcements…</p>;
+  if (loading) return <p className="text-sm text-muted-foreground">Loading announcements…</p>;
   if (!data) return <p role="alert" className="text-sm text-red-700">{error}</p>;
-  if (data.length === 0) return <p className="text-sm text-stone-500">There are no announcements for your house.</p>;
+  if (data.length === 0) return <p className="text-sm text-muted-foreground">There are no announcements for your house.</p>;
   return (
     <ul className="space-y-3">
       {data.map((row) => (
-        <li key={row.id} className="rounded-xl border border-sky-200 p-4">
+        <li key={row.id} className="rounded-xl border border-border p-4">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold text-stone-900">{row.title}</h3>
+            <h3 className="font-semibold text-foreground">{row.title}</h3>
             <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${priorityBadge[row.priority]}`}>
               {row.priority}
             </span>
           </div>
-          <p className="mt-1 text-xs text-stone-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             {formatDate(row.createdAt)}
             {row.author ? ` · ${row.author}` : ""}
           </p>
-          <p className="mt-2 text-sm whitespace-pre-line text-stone-700">{row.description}</p>
+          <p className="mt-2 text-sm whitespace-pre-line text-muted-foreground">{row.description}</p>
         </li>
       ))}
     </ul>

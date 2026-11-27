@@ -5,6 +5,9 @@ import { db } from "@/db";
 import { requireAdmin } from "@/lib/server-auth";
 import { runAction, UserError } from "@/lib/action-result";
 import { isoDate, oneOf, requireUuid } from "@/lib/validation";
+import { selectHouseCleaningTasks } from "@/lib/cleaning-queries";
+
+export type { CleaningTaskRow, CleaningStatus } from "@/lib/cleaning-queries";
 import {
   cleaningAreas,
   cleaningTasks,
@@ -58,6 +61,7 @@ export async function getHouseCleaningData(adminId: string, houseId: string) {
         id: room.id,
         label: roomLabel(room.roomNumber),
       })),
+      tasks: await selectHouseCleaningTasks(houseId),
     };
   });
 }
@@ -181,5 +185,24 @@ export async function createCleaningTasks(
       );
     });
     return count;
+  });
+}
+
+export async function deleteCleaningTask(adminId: string, houseId: string, taskId: string) {
+  return runAction(async () => {
+    await requireAdmin(adminId);
+    requireUuid(houseId, "house");
+    requireUuid(taskId, "cleaning task");
+    const deleted = await db
+      .delete(cleaningTasks)
+      .where(
+        and(
+          eq(cleaningTasks.id, taskId),
+          sql`${cleaningTasks.areaId} IN (SELECT ${cleaningAreas.id} FROM ${cleaningAreas} WHERE ${cleaningAreas.houseId} = ${houseId})`,
+        ),
+      )
+      .returning({ id: cleaningTasks.id });
+    if (deleted.length === 0) throw new UserError("This cleaning task no longer exists.");
+    return null;
   });
 }

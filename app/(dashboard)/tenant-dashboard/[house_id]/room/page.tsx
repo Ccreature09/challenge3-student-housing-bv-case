@@ -16,16 +16,16 @@ function MyRoom() {
 
   return (
     <main className="flex-1">
-      <div className="flex items-center gap-4 border-b border-sky-300 px-8 py-6">
-        <Link href={`${base}/home`} aria-label="Back to my house" className="rounded-lg p-2 text-sky-900 hover:bg-sky-50">
+      <div className="flex items-center gap-4 border-b border-border px-8 py-6">
+        <Link href={`${base}/home`} aria-label="Back to my house" className="rounded-lg p-2 text-primary hover:bg-accent">
           <ChevronLeft className="size-5" />
         </Link>
         <div>
-          <p className="text-xs font-semibold tracking-widest text-sky-700 uppercase">{room?.houseName ?? "My room"}</p>
-          <h1 className="text-2xl font-bold text-sky-900">
+          <p className="text-xs font-semibold tracking-widest text-primary/80 uppercase">{room?.houseName ?? "My room"}</p>
+          <h1 className="text-2xl font-bold text-primary">
             {room ? `Room ${room.roomNumber}` : loading ? "Loading…" : "My room"}
           </h1>
-          {room && <p className="text-sm text-stone-600">{formatMoney(room.monthlyRent)} per month</p>}
+          {room && <p className="text-sm text-muted-foreground">{formatMoney(room.monthlyRent)} per month</p>}
         </div>
       </div>
 
@@ -35,33 +35,33 @@ function MyRoom() {
 
       {room && (
         <div className="flex flex-col gap-8 px-8 py-8 lg:flex-row lg:items-start">
-          <section aria-labelledby="tenant-heading" className="flex-1 space-y-5 rounded-2xl border-2 border-sky-300 p-6">
-            <h2 id="tenant-heading" className="text-xl font-semibold text-sky-900">Living here</h2>
+          <section aria-labelledby="tenant-heading" className="flex-1 space-y-5 rounded-2xl border-2 border-border p-6">
+            <h2 id="tenant-heading" className="text-xl font-semibold text-primary">Living here</h2>
             <div className="flex items-center gap-4">
-              <div className="flex size-14 items-center justify-center rounded-full bg-sky-100 text-sky-800">
+              <div className="flex size-14 items-center justify-center rounded-full bg-sky-100 text-primary">
                 <UserRound className="size-7" />
               </div>
               <div>
-                <p className="text-lg font-semibold text-stone-900">{room.tenantName}</p>
-                <p className="text-sm text-stone-600">
+                <p className="text-lg font-semibold text-foreground">{room.tenantName}</p>
+                <p className="text-sm text-muted-foreground">
                   Since {formatDate(room.startDate)}
                   {room.endDate ? ` · until ${formatDate(room.endDate)}` : ""}
                 </p>
               </div>
             </div>
-            <dl className="grid gap-2 text-sm text-stone-800 sm:grid-cols-2">
+            <dl className="grid gap-2 text-sm text-foreground sm:grid-cols-2">
               <div className="flex items-center gap-2">
-                <Mail className="size-4 text-sky-600" aria-hidden />
+                <Mail className="size-4 text-primary/70" aria-hidden />
                 <dt className="sr-only">Email</dt>
                 <dd>{room.email}</dd>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="size-4 text-sky-600" aria-hidden />
+                <Phone className="size-4 text-primary/70" aria-hidden />
                 <dt className="sr-only">Phone</dt>
                 <dd>{room.phoneNumber ?? "No phone number"}</dd>
               </div>
             </dl>
-            <p className="border-t border-sky-200 pt-4 text-xs text-stone-500">
+            <p className="border-t border-border pt-4 text-xs text-muted-foreground">
               Are these details wrong? Contact the housing office to update them.
             </p>
           </section>

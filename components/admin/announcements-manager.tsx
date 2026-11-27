@@ -13,11 +13,11 @@ import {
 import { formatDate, useActionData } from "@/components/admin/use-action";
 
 const fieldClass =
-  "w-full rounded-lg border border-sky-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-200";
+  "w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30";
 
 const priorityBadge: Record<Priority, string> = {
-  low: "bg-stone-100 text-stone-700",
-  normal: "bg-sky-100 text-sky-900",
+  low: "bg-muted/40 text-muted-foreground",
+  normal: "bg-sky-100 text-primary",
   high: "bg-red-100 text-red-800",
 };
 
@@ -38,8 +38,8 @@ export function AnnouncementsManager({ adminId, houseId }: { adminId: string; ho
 
   return (
     <div className="space-y-6">
-      <section aria-labelledby="new-announcement" className="rounded-xl border border-sky-300 bg-sky-50/50 p-4">
-        <h3 id="new-announcement" className="mb-3 font-semibold text-sky-900">New announcement</h3>
+      <section aria-labelledby="new-announcement" className="rounded-xl border border-border bg-accent/50 p-4">
+        <h3 id="new-announcement" className="mb-3 font-semibold text-primary">New announcement</h3>
         <AnnouncementForm
           submitLabel="Post announcement"
           onSubmit={async (values) => {
@@ -56,13 +56,13 @@ export function AnnouncementsManager({ adminId, houseId }: { adminId: string; ho
           {actionError || error}
         </p>
       )}
-      {loading && <p className="text-sm text-stone-600">Loading announcements…</p>}
+      {loading && <p className="text-sm text-muted-foreground">Loading announcements…</p>}
       {!loading && !data && <p role="alert" className="text-sm text-red-700">{error}</p>}
-      {data && data.length === 0 && <p className="text-sm text-stone-500">No announcements yet.</p>}
+      {data && data.length === 0 && <p className="text-sm text-muted-foreground">No announcements yet.</p>}
 
       <ul className="space-y-3">
         {data?.map((row) => (
-          <li key={row.id} className="rounded-xl border border-sky-200 p-4">
+          <li key={row.id} className="rounded-xl border border-border p-4">
             {editingId === row.id ? (
               <AnnouncementForm
                 initial={row}
@@ -80,23 +80,23 @@ export function AnnouncementsManager({ adminId, houseId }: { adminId: string; ho
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h4 className="font-semibold text-stone-900">{row.title}</h4>
+                    <h4 className="font-semibold text-foreground">{row.title}</h4>
                     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${priorityBadge[row.priority]}`}>
                       {row.priority}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-stone-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {formatDate(row.createdAt)}
                     {row.author ? ` · ${row.author}` : ""}
                   </p>
-                  <p className="mt-2 text-sm whitespace-pre-line text-stone-700">{row.description}</p>
+                  <p className="mt-2 text-sm whitespace-pre-line text-muted-foreground">{row.description}</p>
                 </div>
                 <div className="flex shrink-0 gap-2">
                   <button
                     type="button"
                     onClick={() => setEditingId(row.id)}
                     aria-label={`Edit ${row.title}`}
-                    className="rounded-lg border border-sky-300 p-2 text-sky-800 hover:bg-sky-50"
+                    className="rounded-lg border border-border p-2 text-primary hover:bg-accent"
                   >
                     <Pencil className="size-4" />
                   </button>
@@ -152,11 +152,11 @@ function AnnouncementForm({
     <form onSubmit={submit} className="space-y-3">
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       <div className="grid gap-3 sm:grid-cols-[1fr_10rem]">
-        <label className="text-sm font-semibold text-sky-900">
+        <label className="text-sm font-semibold text-primary">
           Title
           <input name="title" required maxLength={150} defaultValue={initial?.title} className={`${fieldClass} mt-1`} />
         </label>
-        <label className="text-sm font-semibold text-sky-900">
+        <label className="text-sm font-semibold text-primary">
           Priority
           <select name="priority" defaultValue={initial?.priority ?? "normal"} className={`${fieldClass} mt-1`}>
             <option value="low">Low</option>
@@ -165,17 +165,17 @@ function AnnouncementForm({
           </select>
         </label>
       </div>
-      <label className="block text-sm font-semibold text-sky-900">
+      <label className="block text-sm font-semibold text-primary">
         Message
         <textarea name="description" required rows={3} maxLength={5000} defaultValue={initial?.description} className={`${fieldClass} mt-1`} />
       </label>
       <div className="flex justify-end gap-3">
         {onCancel && (
-          <button type="button" onClick={onCancel} className="rounded-lg px-4 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-100">
+          <button type="button" onClick={onCancel} className="rounded-lg px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted">
             Cancel
           </button>
         )}
-        <button type="submit" disabled={saving} className="rounded-lg bg-sky-600 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50">
+        <button type="submit" disabled={saving} className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
           {saving ? "Saving…" : submitLabel}
         </button>
       </div>

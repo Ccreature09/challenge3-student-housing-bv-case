@@ -35,7 +35,7 @@ export type Filter<T> = {
 };
 
 const inputClass =
-  "h-9 w-full min-w-24 rounded-lg border border-sky-300 bg-white px-2.5 text-sm text-stone-900 placeholder:text-stone-400 focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-200";
+  "h-9 w-full min-w-24 rounded-lg border border-border bg-card px-2.5 text-sm text-foreground placeholder:text-muted-foreground/70 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30";
 
 /**
  * Table with search, filters and column sorting. When onCreate is given, the
@@ -138,7 +138,7 @@ export function DataTable<T>({
       <div className="flex flex-wrap items-end gap-3">
         <label className="relative min-w-60 flex-1">
           <span className="sr-only">Search</span>
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-stone-400" />
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground/70" />
           <input
             type="search"
             value={query}
@@ -148,7 +148,7 @@ export function DataTable<T>({
           />
         </label>
         {filters.map((filter) => (
-          <label key={filter.key} className="flex flex-col gap-1 text-xs font-semibold text-sky-900">
+          <label key={filter.key} className="flex flex-col gap-1 text-xs font-semibold text-primary">
             {filter.label}
             <select
               value={filterValues[filter.key] ?? "all"}
@@ -173,9 +173,9 @@ export function DataTable<T>({
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-sky-300">
+      <div className="overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-sky-50 text-left text-xs font-semibold text-sky-900">
+          <thead className="bg-accent text-left text-xs font-semibold text-primary">
             <tr>
               {leadColumn && <th className="w-12 px-3 py-3"><span className="sr-only">{createLabel}</span></th>}
               {columns.map((column) => {
@@ -190,7 +190,7 @@ export function DataTable<T>({
                       <button
                         type="button"
                         onClick={() => toggleSort(column.key)}
-                        className="inline-flex items-center gap-1 hover:text-sky-700"
+                        className="inline-flex items-center gap-1 hover:text-primary"
                       >
                         {column.header}
                         {active === "asc" ? (
@@ -212,7 +212,7 @@ export function DataTable<T>({
           </thead>
           <tbody>
             {onCreate && (
-              <tr className="border-t border-sky-200 bg-sky-50/40">
+              <tr className="border-t border-border bg-accent/40">
                 <td className="px-3 py-2">
                   <button
                     type="submit"
@@ -220,7 +220,7 @@ export function DataTable<T>({
                     disabled={creating}
                     aria-label={createLabel}
                     title={createLabel}
-                    className="flex size-9 items-center justify-center rounded-lg bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50"
+                    className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                   >
                     <Plus className="size-5" />
                   </button>
@@ -234,8 +234,8 @@ export function DataTable<T>({
               </tr>
             )}
             {visible.length === 0 && (
-              <tr className="border-t border-sky-200">
-                <td colSpan={columnCount} className="px-3 py-8 text-center text-stone-500">
+              <tr className="border-t border-border">
+                <td colSpan={columnCount} className="px-3 py-8 text-center text-muted-foreground">
                   {rows.length === 0 ? emptyText : "No results match your search and filters."}
                 </td>
               </tr>
@@ -257,11 +257,11 @@ export function DataTable<T>({
                 }
                 tabIndex={onRowClick ? 0 : undefined}
                 aria-label={onRowClick && rowLabel ? rowLabel(row) : undefined}
-                className={`border-t border-sky-200 ${onRowClick ? "cursor-pointer hover:bg-sky-50 focus-visible:bg-sky-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-sky-500" : ""}`}
+                className={`border-t border-border ${onRowClick ? "cursor-pointer hover:bg-accent focus-visible:bg-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring" : ""}`}
               >
                 {leadColumn && <td className="px-3 py-3" />}
                 {columns.map((column) => (
-                  <td key={column.key} className={`px-3 py-3 text-stone-800 ${column.className ?? ""}`}>
+                  <td key={column.key} className={`px-3 py-3 text-foreground ${column.className ?? ""}`}>
                     {column.render(row)}
                   </td>
                 ))}
@@ -275,7 +275,7 @@ export function DataTable<T>({
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-stone-500">
+      <p className="text-xs text-muted-foreground">
         Showing {visible.length} of {rows.length}
       </p>
     </div>

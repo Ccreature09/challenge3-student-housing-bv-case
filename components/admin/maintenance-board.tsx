@@ -3,45 +3,47 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import type { MaintenanceRow, MaintenanceStatus } from "@/app/actions/maintenance";
+import type { MaintenanceRequestDTO, MaintenanceStatus } from "@/app/actions/maintenance";
 import type { ActionResult } from "@/lib/action-result";
 import { DataTable, type Column } from "@/components/admin/data-table";
 import { formatDate, useActionData } from "@/components/admin/use-action";
 
 const statuses: MaintenanceStatus[] = ["Submitted", "In progress", "Resolved"];
 
-const line = "border-b border-solid border-sky-300";
+const line = "border-b border-solid border-border";
 const fieldStyle =
-  "w-full rounded-lg border border-sky-400 bg-white px-3 py-2 text-sm outline-none focus:border-sky-600 focus:ring-2 focus:ring-sky-200";
-const statusPill = "inline-block rounded-full border border-sky-400 px-4 py-1 text-sm text-sky-800";
+  "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30";
 
-type RequestInput = { title: string; location: string; description: string };
+export const statusPill: Record<MaintenanceStatus, string> = {
+  Submitted: "bg-amber-100 text-amber-900",
+  "In progress": "bg-sky-100 text-primary",
+  Resolved: "bg-green-100 text-green-800",
+};
 
 /**
- * Maintenance requests of one scope (a house's common areas or one room),
- * based on the original maintenance page design and backed by the database.
- * Admins pass onUpdate to change status and reply; tenants only submit and read.
- * The callbacks must be stable (useCallback), because load is refetched when it changes.
+ * The landlord's view of maintenance requests submitted by tenants: counts per
+ * status, a searchable list, and a detail view to update status, reply or delete.
+ * Landlords cannot create requests here. Callbacks must be stable (useCallback).
  */
 export function MaintenanceBoard({
+  title,
   load,
-  onCreate,
   onUpdate,
-  isRoom,
+  onDelete,
+  showHouse = false,
   backHref,
   backLabel,
 }: {
-  load: () => Promise<ActionResult<{ scopeTitle: string; requests: MaintenanceRow[] }>>;
-  onCreate: (input: RequestInput) => Promise<ActionResult>;
-  onUpdate?: (requestId: string, input: { status: string; response: string }) => Promise<ActionResult>;
-  isRoom: boolean;
-  backHref: string;
-  backLabel: string;
+  title: (scopeTitle: string | null) => string;
+  load: () => Promise<ActionResult<{ scopeTitle: string | null; requests: MaintenanceRequestDTO[] }>>;
+  onUpdate: (requestId: string, input: { status: string; response: string }) => Promise<ActionResult>;
+  onDelete: (requestId: string) => Promise<ActionResult>;
+  showHouse?: boolean;
+  backHref?: string;
+  backLabel?: string;
 }) {
   const { data, error, loading, reload } = useActionData(load);
-  const roomId = isRoom ? "room" : null;
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
 
   const requests = data?.requests ?? [];
   const selected = requests.find((request) => request.id === selectedId) ?? null;
@@ -49,74 +51,90 @@ export function MaintenanceBoard({
     statuses.map((status) => [status, requests.filter((request) => request.status === status).length]),
   ) as Record<MaintenanceStatus, number>;
 
-  const heading = selected
-    ? selected.title
-    : creating
-      ? "Log a request"
-      : `Maintenance · ${data?.scopeTitle ?? (roomId ? "Room" : "Common areas")}`;
-
-  const columns: Column<MaintenanceRow>[] = [
+  const columns: Column<MaintenanceRequestDTO>[] = [
     { key: "title", header: "Title", render: (row) => <span className="font-medium">{row.title}</span>, sortValue: (row) => row.title },
-    { key: "location", header: "Location", render: (row) => row.location || "—", sortValue: (row) => row.location },
-    { key: "by", header: "Submitted by", render: (row) => row.submittedBy ?? "—", sortValue: (row) => row.submittedBy },
-    { key: "submitted", header: "Submitted", render: (row) => formatDate(row.createdAt), sortValue: (row) => row.createdAt },
-    { key: "status", header: "Status", render: (row) => <span className={statusPill}>{row.status}</span>, sortValue: (row) => statuses.indexOf(row.status) },
+    ...(showHouse
+      ? [{
+          key: "house",
+          header: "House",
+          render: (row: MaintenanceRequestDTO) => row.houseName ?? "—",
+          sortValue: (row: MaintenanceRequestDTO) => row.houseName,
+        }]
+      : []),
+    {
+      key: "place",
+      header: "Where",
+      render: (row) => (
+        <>
+          {row.roomNumber !== null ? `Room ${row.roomNumber}` : "Shared space"}
+          <div className="text-xs text-muted-foreground">{row.location}</div>
+        </>
+      ),
+      sortValue: (row) => row.roomNumber ?? -1,
+    },
+    { key: "by", header: "Tenant", render: (row) => row.submittedBy?.name ?? "—", sortValue: (row) => row.submittedBy?.name ?? null },
+    { key: "submitted", header: "Submitted", render: (row) => formatDate(row.submittedAt), sortValue: (row) => row.submittedAt },
+    {
+      key: "status",
+      header: "Status",
+      render: (row) => <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusPill[row.status]}`}>{row.status}</span>,
+      sortValue: (row) => statuses.indexOf(row.status),
+    },
   ];
+
+  async function remove(request: MaintenanceRequestDTO) {
+    if (!window.confirm(`Delete the request "${request.title}"? This cannot be undone.`)) return;
+    const result = await onDelete(request.id);
+    if (!result.ok) return window.alert(result.error);
+    setSelectedId(null);
+    await reload();
+  }
 
   return (
     <div className="flex-1">
-      <div className={`flex items-center justify-between gap-4 px-10 py-8 ${line}`}>
+      <div className={`flex items-center justify-between gap-4 px-8 py-6 ${line}`}>
         <div className="flex items-center gap-3">
-          {!selected && !creating && (
-            <Link href={backHref} aria-label={backLabel} className="rounded-lg p-2 text-sky-900 hover:bg-sky-50">
+          {selected ? (
+            <button type="button" onClick={() => setSelectedId(null)} aria-label="Back to all requests" className="rounded-lg p-2 text-primary hover:bg-accent">
               <ChevronLeft className="size-5" />
-            </Link>
+            </button>
+          ) : (
+            backHref && (
+              <Link href={backHref} aria-label={backLabel} className="rounded-lg p-2 text-primary hover:bg-accent">
+                <ChevronLeft className="size-5" />
+              </Link>
+            )
           )}
-          <h1 className="text-2xl font-bold text-sky-900 uppercase">{heading}</h1>
+          <div>
+            <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">Maintenance requests from tenants</p>
+            <h1 className="text-2xl font-bold text-primary">{selected ? selected.title : title(data?.scopeTitle ?? null)}</h1>
+          </div>
         </div>
-        {selected || creating ? (
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedId(null);
-              setCreating(false);
-            }}
-            className="h-12 rounded-2xl border-2 border-sky-400 px-6 text-sky-700 hover:bg-sky-50"
-          >
-            ← All requests
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setCreating(true)}
-            className="h-12 rounded-2xl border-2 border-sky-400 px-6 text-sky-700 hover:bg-sky-50"
-          >
-            + New request
-          </button>
-        )}
       </div>
 
-      {loading && <p className="px-10 py-6 text-sm text-stone-600">Loading requests…</p>}
+      {loading && <p className="px-8 py-6 text-sm text-muted-foreground">Loading requests…</p>}
       {error && (
-        <p role="alert" className="mx-10 my-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
+        <p role="alert" className="mx-8 my-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</p>
       )}
 
-      {data && !selected && !creating && (
+      {data && !selected && (
         <>
-          <div className={`flex flex-wrap gap-6 px-10 py-6 ${line}`}>
+          <div className={`flex flex-wrap gap-4 px-8 py-6 ${line}`}>
             {statuses.map((status) => (
-              <div key={status} className="flex w-48 flex-col items-center rounded-2xl border border-sky-400 px-6 py-4">
-                <span className="text-4xl font-light text-sky-900">{counts[status]}</span>
-                <span className="text-sm text-sky-700">{status}</span>
+              <div key={status} className="flex w-44 flex-col items-center rounded-2xl border border-border bg-card px-6 py-4">
+                <span className="text-4xl font-light text-primary">{counts[status]}</span>
+                <span className="text-sm text-muted-foreground">{status}</span>
               </div>
             ))}
           </div>
-          <div className="px-10 py-6">
+          <div className="px-8 py-6">
             <DataTable
               rows={requests}
               rowKey={(row) => row.id}
               columns={columns}
-              searchText={(row) => `${row.title} ${row.location} ${row.description} ${row.submittedBy ?? ""}`}
+              searchText={(row) =>
+                `${row.title} ${row.location} ${row.description} ${row.submittedBy?.name ?? ""} ${row.houseName ?? ""}`
+              }
               searchPlaceholder="Search requests"
               filters={[
                 {
@@ -125,67 +143,65 @@ export function MaintenanceBoard({
                   options: statuses.map((status) => ({ value: status, label: status })),
                   matches: (row, value) => row.status === value,
                 },
+                {
+                  key: "place",
+                  label: "Where",
+                  options: [
+                    { value: "room", label: "Rooms" },
+                    { value: "shared", label: "Shared spaces" },
+                  ],
+                  matches: (row, value) => (value === "room") === (row.roomId !== null),
+                },
               ]}
               onRowClick={(row) => setSelectedId(row.id)}
               rowLabel={(row) => `Open request ${row.title}`}
-              emptyText="There are no requests yet."
+              emptyText="No tenant has reported a problem here yet."
             />
           </div>
         </>
       )}
 
-      {creating && (
-        <NewRequestForm
-          defaultLocation={roomId ? data?.scopeTitle ?? "" : ""}
-          locationHint={roomId ? "e.g. Window, radiator" : "e.g. Kitchen, living room, stairs"}
-          onSubmit={async (values) => {
-            const result = await onCreate(values);
-            if (!result.ok) return result.error;
-            setCreating(false);
-            await reload();
-            return null;
-          }}
-        />
-      )}
-
       {selected && (
-        <div className="flex flex-col items-start gap-8 px-10 py-8 lg:flex-row">
-          <div className="flex w-full flex-1 flex-col gap-6 rounded-3xl border-2 border-sky-300 p-8">
+        <div className="flex flex-col items-start gap-8 px-8 py-8 lg:flex-row">
+          <div className="flex w-full flex-1 flex-col gap-6 rounded-3xl border-2 border-border bg-card p-8">
             <div className="flex items-start justify-between gap-4">
-              <p className="text-xs text-sky-700">
-                {selected.location || "No location"} / {selected.submittedBy ?? "Unknown"} / Submitted {formatDate(selected.createdAt)}
+              <p className="text-xs text-muted-foreground">
+                {selected.houseName ? `${selected.houseName} / ` : ""}
+                {selected.roomNumber !== null ? `Room ${selected.roomNumber}` : "Shared space"} / {selected.location} /{" "}
+                {selected.submittedBy?.name ?? "Unknown"} / Submitted {formatDate(selected.submittedAt)}
                 {selected.resolvedAt ? ` / Resolved ${formatDate(selected.resolvedAt)}` : ""}
               </p>
-              <span className={statusPill}>{selected.status}</span>
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusPill[selected.status]}`}>{selected.status}</span>
             </div>
             <div className="flex flex-col gap-2">
-              <h2 className="text-lg font-semibold text-sky-900">Description</h2>
-              <p className="rounded-lg border border-sky-300 px-3 py-2 text-sm whitespace-pre-line">{selected.description}</p>
+              <h2 className="text-lg font-semibold text-primary">Description</h2>
+              <p className="rounded-lg border border-border px-3 py-2 text-sm whitespace-pre-line">{selected.description}</p>
             </div>
-            {selected.hasPhoto && (
-              <p className="rounded-2xl border-2 border-sky-300 bg-sky-50 p-4 text-sm text-sky-700">A photo was attached to this request.</p>
+            {selected.photoUrl && (
+              <div className="overflow-hidden rounded-2xl border border-border bg-background">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={selected.photoUrl} alt={`Photo for ${selected.title}`} className="max-h-96 w-full object-contain" />
+              </div>
             )}
+            <button
+              type="button"
+              onClick={() => void remove(selected)}
+              className="self-start rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+            >
+              Delete request
+            </button>
           </div>
 
-          {onUpdate ? (
-            <UpdateRequestForm
-              key={selected.id}
-              request={selected}
-              onSave={async (values) => {
-                const result = await onUpdate(selected.id, values);
-                if (!result.ok) return result.error;
-                await reload();
-                return null;
-              }}
-            />
-          ) : (
-            <div className="flex w-full shrink-0 flex-col gap-3 rounded-3xl border-2 border-sky-300 p-6 lg:w-96">
-              <h2 className="text-center text-xl font-semibold text-sky-900">Response from the housing office</h2>
-              <p className="rounded-lg border border-sky-300 px-3 py-2 text-sm whitespace-pre-line text-stone-800">
-                {selected.response || "No response yet. You will see it here once the housing office replies."}
-              </p>
-            </div>
-          )}
+          <UpdateRequestForm
+            key={selected.id}
+            request={selected}
+            onSave={async (values) => {
+              const result = await onUpdate(selected.id, values);
+              if (!result.ok) return result.error;
+              await reload();
+              return null;
+            }}
+          />
         </div>
       )}
     </div>
@@ -196,7 +212,7 @@ function UpdateRequestForm({
   request,
   onSave,
 }: {
-  request: MaintenanceRow;
+  request: MaintenanceRequestDTO;
   onSave: (values: { status: string; response: string }) => Promise<string | null>;
 }) {
   const [status, setStatus] = useState<MaintenanceStatus>(request.status);
@@ -209,13 +225,13 @@ function UpdateRequestForm({
     setSaving(true);
     const error = await onSave({ status, response });
     setSaving(false);
-    setMessage(error ? { ok: false, text: error } : { ok: true, text: "Update saved." });
+    setMessage(error ? { ok: false, text: error } : { ok: true, text: "Update saved. The tenant can see it now." });
   }
 
   return (
-    <form onSubmit={save} className="flex w-full shrink-0 flex-col gap-5 rounded-3xl border-2 border-sky-300 p-6 lg:w-96">
-      <h2 className="text-center text-xl font-semibold text-sky-900">Update request</h2>
-      <label className="flex flex-col gap-2 text-sm font-semibold text-sky-900">
+    <form onSubmit={save} className="flex w-full shrink-0 flex-col gap-5 rounded-3xl border-2 border-border bg-card p-6 lg:w-96">
+      <h2 className="text-center text-xl font-semibold text-primary">Update request</h2>
+      <label className="flex flex-col gap-2 text-sm font-semibold">
         Status
         <select
           value={status}
@@ -228,11 +244,11 @@ function UpdateRequestForm({
           {statuses.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
       </label>
-      <label className="flex flex-col gap-2 text-sm font-semibold text-sky-900">
+      <label className="flex flex-col gap-2 text-sm font-semibold">
         Response to tenant
         <textarea
           rows={5}
-          maxLength={5000}
+          maxLength={2000}
           placeholder="Write an update…"
           value={response}
           onChange={(event) => {
@@ -247,61 +263,9 @@ function UpdateRequestForm({
           {message.text}
         </p>
       )}
-      <div className="flex justify-center">
-        <button type="submit" disabled={saving} className="h-12 rounded-xl bg-sky-500 px-8 text-base text-white hover:bg-sky-600 disabled:opacity-50">
-          {saving ? "Saving…" : "Save update"}
-        </button>
-      </div>
-    </form>
-  );
-}
-
-function NewRequestForm({
-  defaultLocation,
-  locationHint,
-  onSubmit,
-}: {
-  defaultLocation: string;
-  locationHint: string;
-  onSubmit: (values: { title: string; location: string; description: string }) => Promise<string | null>;
-}) {
-  const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    setSaving(true);
-    setError("");
-    const message = await onSubmit({
-      title: String(form.get("title")),
-      location: String(form.get("location")),
-      description: String(form.get("description")),
-    });
-    setSaving(false);
-    if (message) setError(message);
-  }
-
-  return (
-    <form onSubmit={submit} className="flex max-w-xl flex-col gap-6 px-10 py-8">
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
-      <label className="flex flex-col gap-2 text-sm font-semibold text-sky-900">
-        Title
-        <input name="title" required maxLength={150} className={`${fieldStyle} font-normal`} />
-      </label>
-      <label className="flex flex-col gap-2 text-sm font-semibold text-sky-900">
-        Location
-        <input name="location" required maxLength={150} defaultValue={defaultLocation} placeholder={locationHint} className={`${fieldStyle} font-normal`} />
-      </label>
-      <label className="flex flex-col gap-2 text-sm font-semibold text-sky-900">
-        Description
-        <textarea name="description" required rows={4} maxLength={5000} className={`${fieldStyle} font-normal`} />
-      </label>
-      <div className="flex justify-end">
-        <button type="submit" disabled={saving} className="h-12 rounded-xl bg-sky-500 px-8 text-base text-white hover:bg-sky-600 disabled:opacity-50">
-          {saving ? "Saving…" : "Submit request"}
-        </button>
-      </div>
+      <button type="submit" disabled={saving} className="h-11 rounded-xl bg-primary px-8 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+        {saving ? "Saving…" : "Save update"}
+      </button>
     </form>
   );
 }

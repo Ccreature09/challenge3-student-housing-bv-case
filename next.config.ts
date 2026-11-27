@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   /* config options here */
   experimental: {
     agentFeedback: true,
+    // Maintenance photos are up to 5 MB; the default server-action limit is 1 MB.
+    serverActions: { bodySizeLimit: "6mb" },
   },
   cacheComponents: true,
   partialPrefetching: true,

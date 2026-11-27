@@ -2,10 +2,10 @@
 
 import { Suspense } from "react";
 import { useParams } from "next/navigation";
-import { TenantMaintenance } from "@/components/admin/tenant-maintenance";
+import { MaintenanceRequests } from "@/components/tenant/maintenance-requests";
 
 function RoomMaintenance() {
-  return <TenantMaintenance houseId={useParams<{ house_id: string }>().house_id} scope="room" />;
+  return <MaintenanceRequests houseId={useParams<{ house_id: string }>().house_id} scope="room" />;
 }
 
 export default function RoomMaintenancePage() {

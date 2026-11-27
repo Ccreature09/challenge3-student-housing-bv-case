@@ -4,10 +4,12 @@ import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { getAuthenticatedProfile } from "@/lib/server-auth";
 import { runAction, UserError } from "@/lib/action-result";
-import { oneOf, requireUuid } from "@/lib/validation";
-import { insertMaintenance, selectMaintenance } from "@/lib/maintenance-queries";
+import { requireUuid, text } from "@/lib/validation";
+import { selectHouseCleaningTasks } from "@/lib/cleaning-queries";
 import {
   announcements,
+  cleaningAreas,
+  cleaningTasks,
   houses,
   maintenanceOrComplaints,
   roomAssignments,
@@ -56,7 +58,7 @@ async function requireTenant(houseId: string) {
 export async function getTenantHome(houseId: string) {
   return runAction(async () => {
     const tenant = await requireTenant(houseId);
-    const [[housemates], [openRequests], [announcementCount]] = await Promise.all([
+    const [[housemates], [openRequests], [announcementCount], [myCleaning]] = await Promise.all([
       db
         .select({ n: sql<number>`count(DISTINCT ${roomAssignments.studentId})::int` })
         .from(roomAssignments)
@@ -73,6 +75,10 @@ export async function getTenantHome(houseId: string) {
           ),
         ),
       db.select({ n: sql<number>`count(*)::int` }).from(announcements).where(eq(announcements.houseId, houseId)),
+      db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(cleaningTasks)
+        .where(and(eq(cleaningTasks.assignedRoomId, tenant.roomId), eq(cleaningTasks.status, "open"))),
     ]);
     return {
       firstName: tenant.profile.firstName,
@@ -84,6 +90,7 @@ export async function getTenantHome(houseId: string) {
         housemates: Math.max(0, housemates.n - 1),
         openMaintenance: openRequests.n,
         announcements: announcementCount.n,
+        myOpenCleaning: myCleaning.n,
       },
     };
   });
@@ -163,29 +170,39 @@ export async function getMyRoom(houseId: string) {
   });
 }
 
-type Scope = "house" | "room";
-
-/** Requests for the house's common areas, or for the tenant's own room. */
-export async function listTenantMaintenance(houseId: string, scope: Scope) {
+/** The cleaning schedule of the house's shared spaces; the tenant's own tasks are marked. */
+export async function getTenantCleaning(houseId: string) {
   return runAction(async () => {
     const tenant = await requireTenant(houseId);
-    const roomId = oneOf(scope, ["house", "room"] as const, "scope") === "room" ? tenant.roomId : null;
+    const tasks = await selectHouseCleaningTasks(houseId);
     return {
-      scopeTitle: roomId ? `Room ${tenant.roomNumber}` : "Common areas",
-      requests: await selectMaintenance(houseId, roomId),
+      roomNumber: tenant.roomNumber,
+      tasks: tasks.map((task) => ({ ...task, mine: task.roomId === tenant.roomId })),
     };
   });
 }
 
-export async function createTenantMaintenance(
-  houseId: string,
-  scope: Scope,
-  input: { title: string; location: string; description: string },
-) {
+/** Marks a task assigned to the tenant's room as done, with an optional note for the landlord. */
+export async function completeCleaningTask(houseId: string, taskId: string, note: string) {
   return runAction(async () => {
     const tenant = await requireTenant(houseId);
-    const roomId = oneOf(scope, ["house", "room"] as const, "scope") === "room" ? tenant.roomId : null;
-    await insertMaintenance(houseId, roomId, tenant.profile.id, input);
+    requireUuid(taskId, "cleaning task");
+    const completionNote = text(note, "Note", 2000, { optional: true });
+    const updated = await db
+      .update(cleaningTasks)
+      .set({ status: "done", completedAt: new Date().toISOString(), completionNote })
+      .where(
+        and(
+          eq(cleaningTasks.id, taskId),
+          eq(cleaningTasks.assignedRoomId, tenant.roomId),
+          eq(cleaningTasks.status, "open"),
+          sql`${cleaningTasks.areaId} IN (SELECT ${cleaningAreas.id} FROM ${cleaningAreas} WHERE ${cleaningAreas.houseId} = ${houseId})`,
+        ),
+      )
+      .returning({ id: cleaningTasks.id });
+    if (updated.length === 0) {
+      throw new UserError("Only open tasks assigned to your room can be marked as done.");
+    }
     return null;
   });
 }

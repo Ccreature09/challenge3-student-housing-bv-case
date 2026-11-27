@@ -52,11 +52,16 @@ export async function getAuthenticatedProfile() {
 /** The signed-in admin, who must own the admin dashboard in the URL. */
 export async function requireAdmin(adminId: string) {
   const profile = await getAuthenticatedProfile();
+  // The session is one cookie shared by every tab, so signing in as someone
+  // else in another tab changes who this page runs as. Say who that is.
+  const who = `${profile.firstName} ${profile.lastName} (${profile.role})`;
   if (profile.role !== "admin") {
-    throw new UserError("Only admins can use the admin dashboard.");
+    throw new UserError(
+      `You are signed in as ${who}. Sign out and sign in with an admin account to use the admin dashboard.`,
+    );
   }
   if (adminId !== profile.id) {
-    throw new UserError("This admin dashboard does not belong to your account.");
+    throw new UserError(`This admin dashboard belongs to another account; you are signed in as ${who}.`);
   }
   return profile;
 }

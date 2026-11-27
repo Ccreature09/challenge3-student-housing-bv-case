@@ -29,21 +29,21 @@ function HouseDashboard() {
 
   return (
     <main className="flex-1">
-      <div className="flex items-center gap-4 border-b border-sky-300 px-8 py-6">
+      <div className="flex items-center gap-4 border-b border-border px-8 py-6">
         <Link
           href={`/admin-dashboard/${adminId}/home`}
           aria-label="Back to dashboard"
-          className="rounded-lg p-2 text-sky-900 hover:bg-sky-50"
+          className="rounded-lg p-2 text-primary hover:bg-accent"
         >
           <ChevronLeft className="size-5" />
         </Link>
         <div>
-          <p className="text-xs font-semibold tracking-widest text-sky-700 uppercase">Accommodation</p>
-          <h1 className="text-2xl font-bold text-sky-900">
+          <p className="text-xs font-semibold tracking-widest text-primary/80 uppercase">Accommodation</p>
+          <h1 className="text-2xl font-bold text-primary">
             {house ? house.name : loading ? "Loading…" : "Accommodation"}
           </h1>
           {house && (
-            <p className="text-sm text-stone-600">
+            <p className="text-sm text-muted-foreground">
               {house.postalCode} {house.city}
             </p>
           )}
@@ -107,7 +107,7 @@ function HouseDashboard() {
         description="Fill in the first row and press + to add a room. Click a room to open its dashboard."
         size="xl"
       >
-        {popup === "rooms" && <RoomsTable adminId={adminId} houseId={houseId} base={base} />}
+        {popup === "rooms" && <RoomsTable adminId={adminId} houseId={houseId} base={base} onNavigate={() => setPopup(null)} />}
       </Modal>
 
       <Modal
@@ -122,7 +122,17 @@ function HouseDashboard() {
   );
 }
 
-function RoomsTable({ adminId, houseId, base }: { adminId: string; houseId: string; base: string }) {
+function RoomsTable({
+  adminId,
+  houseId,
+  base,
+  onNavigate,
+}: {
+  adminId: string;
+  houseId: string;
+  base: string;
+  onNavigate: () => void;
+}) {
   const router = useRouter();
   const load = useCallback(() => listRooms(adminId, houseId), [adminId, houseId]);
   const { data, error, loading, reload } = useActionData(load);
@@ -131,7 +141,7 @@ function RoomsTable({ adminId, houseId, base }: { adminId: string; houseId: stri
     {
       key: "roomNumber",
       header: "Room number",
-      render: (row) => <span className="font-medium text-stone-900">Room {row.roomNumber}</span>,
+      render: (row) => <span className="font-medium text-foreground">Room {row.roomNumber}</span>,
       sortValue: (row) => row.roomNumber,
       create: { name: "roomNumber", label: "Room number", type: "number", step: "1", required: true },
     },
@@ -145,7 +155,7 @@ function RoomsTable({ adminId, houseId, base }: { adminId: string; houseId: stri
     {
       key: "tenant",
       header: "Tenant",
-      render: (row) => row.tenantName ?? <span className="text-stone-400">—</span>,
+      render: (row) => row.tenantName ?? <span className="text-muted-foreground/70">—</span>,
       sortValue: (row) => row.tenantName,
     },
     {
@@ -163,7 +173,7 @@ function RoomsTable({ adminId, houseId, base }: { adminId: string; houseId: stri
     },
   ];
 
-  if (loading) return <p className="text-sm text-stone-600">Loading rooms…</p>;
+  if (loading) return <p className="text-sm text-muted-foreground">Loading rooms…</p>;
   if (!data) return <p role="alert" className="text-sm text-red-700">{error}</p>;
 
   return (
@@ -194,7 +204,10 @@ function RoomsTable({ adminId, houseId, base }: { adminId: string; houseId: stri
         await reload();
         return null;
       }}
-      onRowClick={(row) => router.push(`${base}/rooms/${row.id}`)}
+      onRowClick={(row) => {
+        onNavigate();
+        router.push(`${base}/rooms/${row.id}`);
+      }}
       rowLabel={(row) => `Open room ${row.roomNumber}`}
       emptyText="This accommodation has no rooms yet. Add the first one in the row above."
     />
