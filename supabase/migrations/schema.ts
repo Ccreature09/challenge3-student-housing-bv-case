@@ -41,14 +41,30 @@ export const maintenanceOrComplaints = pgTable("MAINTENANCE_OR_COMPLAINTS", {
 	type: varchar(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }),
 	resolvedAt: timestamp("resolved_at", { withTimezone: true, mode: 'string' }),
-	submittedBy: uuid("submitted_by").defaultRandom(),
-	id: uuid().defaultRandom().notNull(),
+	submittedBy: uuid("submitted_by"),
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	houseId: uuid("house_id"),
+	roomId: uuid("room_id"),
+	location: varchar({ length: 150 }),
+	response: text(),
 }, (table) => [
+	index("idx_maintenance_house_id").using("btree", table.houseId.asc().nullsLast().op("uuid_ops")),
+	index("idx_maintenance_room_id").using("btree", table.roomId.asc().nullsLast().op("uuid_ops")),
 	foreignKey({
 			columns: [table.submittedBy],
 			foreignColumns: [users.id],
 			name: "MAINTENANCE_OR_COMPLAINTS_submitted_by_fkey"
 		}),
+	foreignKey({
+			columns: [table.houseId],
+			foreignColumns: [houses.id],
+			name: "MAINTENANCE_OR_COMPLAINTS_house_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.roomId],
+			foreignColumns: [rooms.id],
+			name: "MAINTENANCE_OR_COMPLAINTS_room_id_fkey"
+		}).onDelete("cascade"),
 ]);
 
 export const announcements = pgTable("ANNOUNCEMENTS", {
@@ -58,12 +74,19 @@ export const announcements = pgTable("ANNOUNCEMENTS", {
 	priority: varchar(),
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	createdBy: uuid("created_by"),
+	houseId: uuid("house_id"),
 }, (table) => [
+	index("idx_announcements_house_id").using("btree", table.houseId.asc().nullsLast().op("uuid_ops")),
 	foreignKey({
 			columns: [table.createdBy],
 			foreignColumns: [users.id],
 			name: "ANNOUNCEMENTS_created_by_fkey"
 		}),
+	foreignKey({
+			columns: [table.houseId],
+			foreignColumns: [houses.id],
+			name: "ANNOUNCEMENTS_house_id_fkey"
+		}).onDelete("cascade"),
 ]);
 
 export const houses = pgTable("HOUSES", {
@@ -159,6 +182,11 @@ export const cleaningTasks = pgTable("cleaning_tasks", {
 		foreignColumns: [rooms.id],
 		name: "cleaning_tasks_assigned_room_id_fkey",
 	}).onDelete("cascade"),
+	foreignKey({
+		columns: [table.createdByEmployeeId],
+		foreignColumns: [users.id],
+		name: "cleaning_tasks_created_by_employee_id_fkey",
+	}).onDelete("set null"),
 	check("cleaning_tasks_completion_state_check", sql`(status = 'open' AND completed_at IS NULL) OR (status = 'done' AND completed_at IS NOT NULL)`),
 ]);
 

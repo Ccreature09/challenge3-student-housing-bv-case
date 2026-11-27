@@ -1,8 +1,10 @@
 "use server";
 
-import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { getAuthenticatedProfile } from "@/lib/server-auth";
+import { requireAdmin } from "@/lib/server-auth";
+import { runAction, UserError } from "@/lib/action-result";
+import { isoDate, oneOf, requireUuid } from "@/lib/validation";
 import {
   cleaningAreas,
   cleaningTasks,
@@ -11,29 +13,14 @@ import {
   rooms,
 } from "@/supabase/migrations/schema";
 
-function houseLabel(house: typeof houses.$inferSelect) {
-  return `${house.street} ${house.houseNumber}, ${house.city}`;
-}
-
 function roomLabel(roomNumber: number) {
   return `Room ${String(roomNumber).padStart(3, "0")}`;
 }
 
-async function authorizeAdmin(adminId: string) {
-  const profile = await getAuthenticatedProfile();
-  if (profile.role !== "admin") {
-    throw new Error("Only admins can manage cleaning schedules.");
-  }
-  if (adminId !== profile.id) {
-    throw new Error("This admin dashboard does not belong to your account.");
-  }
-
-  return profile;
-}
-
-async function activeRoomIds(houseId: string) {
+/** Rooms of the house that have a tenant today, ordered by room number. */
+async function occupiedRooms(houseId: string) {
   const rows = await db
-    .select({ roomId: roomAssignments.roomId })
+    .select({ id: rooms.id, roomNumber: rooms.roomNumber })
     .from(roomAssignments)
     .innerJoin(rooms, eq(roomAssignments.roomId, rooms.id))
     .where(
@@ -47,49 +34,38 @@ async function activeRoomIds(houseId: string) {
       ),
     )
     .orderBy(asc(rooms.roomNumber));
-  return [...new Set(rows.map((row) => row.roomId))];
+  const unique = new Map(rows.map((row) => [row.id, row]));
+  return [...unique.values()];
 }
 
-export async function getAdminCleaningData(adminId: string) {
-  await authorizeAdmin(adminId);
-  const houseRows = await db.select().from(houses);
-  const houseIds = houseRows.map((house) => house.id);
-  const areaRows = houseIds.length
-    ? await db
-        .select()
-        .from(cleaningAreas)
-        .where(inArray(cleaningAreas.houseId, houseIds))
-    : [];
-  const occupiedRoomIds = (
-    await Promise.all(houseIds.map((houseId) => activeRoomIds(houseId)))
-  ).flat();
-  const roomRows = occupiedRoomIds.length
-    ? await db.select().from(rooms).where(inArray(rooms.id, occupiedRoomIds))
-    : [];
+export async function getHouseCleaningData(adminId: string, houseId: string) {
+  return runAction(async () => {
+    await requireAdmin(adminId);
+    requireUuid(houseId, "house");
+    const [house] = await db.select().from(houses).where(eq(houses.id, houseId)).limit(1);
+    if (!house) throw new UserError("This accommodation does not exist.");
 
-  return {
-    houses: houseRows.map((house) => ({
-      id: house.id,
-      name: houseLabel(house),
-    })),
-    areas: areaRows.map(({ id, houseId, name, floor }) => ({
-      id,
-      houseId,
-      name,
-      floor,
-    })),
-    rooms: roomRows.map(({ id, houseId, roomNumber }) => ({
-      id,
-      houseId,
-      label: roomLabel(roomNumber),
-    })),
-  };
+    const areaRows = await db
+      .select({ id: cleaningAreas.id, name: cleaningAreas.name, floor: cleaningAreas.floor })
+      .from(cleaningAreas)
+      .where(eq(cleaningAreas.houseId, houseId))
+      .orderBy(asc(cleaningAreas.floor), asc(cleaningAreas.name));
+
+    return {
+      houseName: `${house.street ?? ""} ${house.houseNumber}, ${house.city ?? ""}`.trim(),
+      areas: areaRows,
+      rooms: (await occupiedRooms(houseId)).map((room) => ({
+        id: room.id,
+        label: roomLabel(room.roomNumber),
+      })),
+    };
+  });
 }
 
-type Repeat = "none" | "weekly" | "biweekly" | "monthly";
+const REPEATS = ["none", "weekly", "biweekly", "monthly"] as const;
+type Repeat = (typeof REPEATS)[number];
 
 type CreateCleaningInput = {
-  houseId: string;
   areaId?: string;
   newAreaName?: string;
   floor?: number;
@@ -110,10 +86,7 @@ function addDueDate(start: string, repeat: Repeat, occurrence: number) {
     date.setDate(1);
     date.setMonth(date.getMonth() + occurrence);
     date.setDate(
-      Math.min(
-        day,
-        new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(),
-      ),
+      Math.min(day, new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()),
     );
   }
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -121,135 +94,92 @@ function addDueDate(start: string, repeat: Repeat, occurrence: number) {
 
 export async function createCleaningTasks(
   adminId: string,
+  houseId: string,
   input: CreateCleaningInput,
 ) {
-  await authorizeAdmin(adminId);
-  if (
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      input.houseId,
-    )
-  ) {
-    throw new Error("Choose a valid house.");
-  }
-  if (
-    typeof input.title !== "string" ||
-    !input.title.trim() ||
-    input.title.length > 150
-  ) {
-    throw new Error("Enter a title of 1 to 150 characters.");
-  }
-  if (
-    typeof input.description !== "string" ||
-    input.description.length > 2000
-  ) {
-    throw new Error("The description must be 2000 characters or fewer.");
-  }
-  const parsedDueDate = /^\d{4}-\d{2}-\d{2}$/.test(input.firstDue)
-    ? new Date(`${input.firstDue}T00:00:00`)
-    : new Date(Number.NaN);
-  if (
-    Number.isNaN(parsedDueDate.getTime()) ||
-    parsedDueDate.toISOString().slice(0, 10) !== input.firstDue
-  ) {
-    throw new Error("Choose a valid due date.");
-  }
-  if (!["none", "weekly", "biweekly", "monthly"].includes(input.repeat)) {
-    throw new Error("Choose a valid repeat interval.");
-  }
-  if (!["rotate", "fixed"].includes(input.mode)) {
-    throw new Error("Choose a valid assignment mode.");
-  }
-
-  const roomIds = await activeRoomIds(input.houseId);
-  if (roomIds.length === 0)
-    throw new Error(
-      "There are no tenants with active room assignments in this house.",
-    );
-
-  if (input.newAreaName?.trim()) {
-    if (
-      input.newAreaName.length > 100 ||
-      !Number.isInteger(input.floor) ||
-      input.floor! < -10 ||
-      input.floor! > 200
-    ) {
-      throw new Error(
-        "Enter a shared-space name (up to 100 characters) and a valid floor.",
-      );
+  return runAction(async () => {
+    const admin = await requireAdmin(adminId);
+    requireUuid(houseId, "house");
+    if (typeof input.title !== "string" || !input.title.trim() || input.title.length > 150) {
+      throw new UserError("Enter a title of 1 to 150 characters.");
     }
-  }
-  const assignedRoomId = input.mode === "fixed" ? input.fixedRoomId : undefined;
-  if (
-    input.mode === "fixed" &&
-    (!assignedRoomId || !roomIds.includes(assignedRoomId))
-  ) {
-    throw new Error("Choose a room with an active tenant.");
-  }
+    if (typeof input.description !== "string" || input.description.length > 2000) {
+      throw new UserError("The description must be 2000 characters or fewer.");
+    }
+    const firstDue = isoDate(input.firstDue, "First due date");
+    const repeat = oneOf(input.repeat, REPEATS, "repeat interval");
+    const mode = oneOf(input.mode, ["rotate", "fixed"] as const, "assignment mode");
 
-  const count = input.repeat === "none" ? 1 : 4;
+    const roomIds = (await occupiedRooms(houseId)).map((room) => room.id);
+    if (roomIds.length === 0) {
+      throw new UserError("There are no tenants with active room assignments in this house.");
+    }
 
-  await db.transaction(async (tx) => {
-    const [house] = await tx
-      .select({ id: houses.id })
-      .from(houses)
-      .where(eq(houses.id, input.houseId))
-      .limit(1);
-    if (!house) throw new Error("The selected house no longer exists.");
-
-    let areaId = input.areaId;
-    if (input.newAreaName?.trim()) {
-      const [createdArea] = await tx
-        .insert(cleaningAreas)
-        .values({
-          houseId: input.houseId,
-          name: input.newAreaName.trim(),
-          floor: input.floor!,
-        })
-        .onConflictDoNothing()
-        .returning({ id: cleaningAreas.id });
-      if (createdArea) {
-        areaId = createdArea.id;
-      } else {
-        const [existingArea] = await tx
-          .select({ id: cleaningAreas.id })
-          .from(cleaningAreas)
-          .where(
-            and(
-              eq(cleaningAreas.houseId, input.houseId),
-              eq(cleaningAreas.name, input.newAreaName.trim()),
-              eq(cleaningAreas.floor, input.floor!),
-            ),
-          )
-          .limit(1);
-        areaId = existingArea?.id;
+    const newAreaName = input.newAreaName?.trim();
+    if (newAreaName) {
+      if (
+        newAreaName.length > 100 ||
+        !Number.isInteger(input.floor) ||
+        input.floor! < -10 ||
+        input.floor! > 200
+      ) {
+        throw new UserError("Enter a shared-space name (up to 100 characters) and a valid floor.");
       }
     }
-    if (!areaId) throw new Error("Select or create a shared space.");
+    const assignedRoomId = mode === "fixed" ? input.fixedRoomId : undefined;
+    if (mode === "fixed" && (!assignedRoomId || !roomIds.includes(assignedRoomId))) {
+      throw new UserError("Choose a room with an active tenant.");
+    }
 
-    const [area] = await tx
-      .select({ id: cleaningAreas.id })
-      .from(cleaningAreas)
-      .where(
-        and(
-          eq(cleaningAreas.id, areaId),
-          eq(cleaningAreas.houseId, input.houseId),
-        ),
-      )
-      .limit(1);
-    if (!area)
-      throw new Error(
-        "The selected shared space does not belong to this house.",
+    const count = repeat === "none" ? 1 : 4;
+
+    await db.transaction(async (tx) => {
+      let areaId = input.areaId;
+      if (newAreaName) {
+        const [createdArea] = await tx
+          .insert(cleaningAreas)
+          .values({ houseId, name: newAreaName, floor: input.floor! })
+          .onConflictDoNothing()
+          .returning({ id: cleaningAreas.id });
+        if (createdArea) {
+          areaId = createdArea.id;
+        } else {
+          const [existingArea] = await tx
+            .select({ id: cleaningAreas.id })
+            .from(cleaningAreas)
+            .where(
+              and(
+                eq(cleaningAreas.houseId, houseId),
+                eq(cleaningAreas.name, newAreaName),
+                eq(cleaningAreas.floor, input.floor!),
+              ),
+            )
+            .limit(1);
+          areaId = existingArea?.id;
+        }
+      }
+      if (!areaId) throw new UserError("Select or create a shared space.");
+      requireUuid(areaId, "shared space");
+
+      const [area] = await tx
+        .select({ id: cleaningAreas.id })
+        .from(cleaningAreas)
+        .where(and(eq(cleaningAreas.id, areaId), eq(cleaningAreas.houseId, houseId)))
+        .limit(1);
+      if (!area) throw new UserError("The selected shared space does not belong to this house.");
+
+      await tx.insert(cleaningTasks).values(
+        Array.from({ length: count }, (_, occurrence) => ({
+          areaId: area.id,
+          assignedRoomId: assignedRoomId ?? roomIds[occurrence % roomIds.length],
+          title: input.title.trim(),
+          description: input.description.trim() || null,
+          dueDate: addDueDate(firstDue, repeat, occurrence),
+          status: "open" as const,
+          createdByEmployeeId: admin.id,
+        })),
       );
-
-    await tx.insert(cleaningTasks).values(
-      Array.from({ length: count }, (_, occurrence) => ({
-        areaId: area.id,
-        assignedRoomId: assignedRoomId ?? roomIds[occurrence % roomIds.length],
-        title: input.title.trim(),
-        description: input.description.trim() || null,
-        dueDate: addDueDate(input.firstDue, input.repeat, occurrence),
-        status: "open" as const,
-      })),
-    );
+    });
+    return count;
   });
 }
