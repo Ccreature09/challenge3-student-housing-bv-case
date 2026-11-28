@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { getAuthenticatedProfile } from "@/lib/server-auth";
 import {
   users,
-  maintenanceOrComplaints
+  maintenanceOrComplaints,
   houses,
   rooms,
   roomAssignments,
@@ -15,7 +15,7 @@ import {
 import { NextResponse } from "next/server";
 import Complaints from "@/page";
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
     try {
         const body = await request.json();
 
@@ -39,13 +39,26 @@ export async function GET(request: Request) {
                 { status: 400 }
             );
 
-            await db.insert(complaints).values({
+            return NextResponse.json(
+            { message: "Complaint saved successfully" },
+            { status: 201 }
+            );
+
+        } catch (error) {
+            console.error(error);
+
+            return NextResponse.json(
+                { message: "Something went wrong. Please try again later!"},
+                { status: 500 }
+            );
+        }
+
+            await db.insert(maintenanceOrComplaints).values({ //this has to be placed after the validation, as if the validation fails, the function runs an error before reaching an insert. But if it succeeds, the if block gets skipped entirely
                 title: title.trim(),
                 location: location.trim(),
                 description: description.trim(),
                 photo: photo.trim()
-            })
-        }
+            });
     }
 
 

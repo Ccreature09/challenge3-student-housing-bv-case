@@ -15,7 +15,7 @@ export default function CreateComplaints() {
         event.preventDefault(); //stops page from refreshing upon form submit
     
         const response = await fetch("/api/complaints", { //fetch sends request to backend
-            method: "POST"
+            method: "POST",
 
             headers: { //the following lines (up to first } ) are important to parse request bodies (POST, PUT) correctly
                 "Content-Type": "application/json",
