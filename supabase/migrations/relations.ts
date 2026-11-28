@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { users, calendarEvents, maintenanceOrComplaints, announcements, houses, rooms, roomAssignments, usersInAuth } from "./schema";
+import { users, calendarEvents, maintenanceOrComplaints, announcements, houses, rooms, roomAssignments } from "./schema";
 
 export const calendarEventsRelations = relations(calendarEvents, ({one}) => ({
 	user_assignedUserId: one(users, {
@@ -14,7 +14,7 @@ export const calendarEventsRelations = relations(calendarEvents, ({one}) => ({
 	}),
 }));
 
-export const usersRelations = relations(users, ({one, many}) => ({
+export const usersRelations = relations(users, ({many}) => ({
 	calendarEvents_assignedUserId: many(calendarEvents, {
 		relationName: "calendarEvents_assignedUserId_users_id"
 	}),
@@ -24,10 +24,6 @@ export const usersRelations = relations(users, ({one, many}) => ({
 	maintenanceOrComplaints: many(maintenanceOrComplaints),
 	announcements: many(announcements),
 	roomAssignments: many(roomAssignments),
-	usersInAuth: one(usersInAuth, {
-		fields: [users.authUserId],
-		references: [usersInAuth.id]
-	}),
 }));
 
 export const maintenanceOrComplaintsRelations = relations(maintenanceOrComplaints, ({one}) => ({

@@ -1,196 +1,172 @@
-import Link from "next/link";
-import "./globals.css";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/sidebar";
+"use client";
 
-export default function Home() {
+import { Suspense, useCallback, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Building2, Users } from "lucide-react";
+import { createHouse, listHouses, type HouseRow } from "@/app/actions/houses";
+import { DataTable, type Column } from "@/components/admin/data-table";
+import { Modal } from "@/components/admin/modal";
+import { ModuleCard } from "@/components/admin/module-card";
+import { useActionData } from "@/components/admin/use-action";
+
+function AdminHome() {
+  const adminId = useParams<{ "admin-id": string }>()["admin-id"];
+  const base = `/admin-dashboard/${adminId}`;
+  const [open, setOpen] = useState(false);
+
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <AppSidebar />
+    <main className="flex-1 p-8">
+      <header className="mb-10 text-center">
+        <img src="/images/lightlogo.png" alt="Student Housing logo" width={400} height={300} className="mx-auto" />
+        <p className="text-3xl font-medium text-gray-700">Student Housing Management Platform</p>
+      </header>
 
-        {/* Main content */}
-        <main className="min-w-0 flex-1 p-8">
-
-          {/* Header */}
-          <header className="mb-8 text-center">
-            <img
-              src="/images/lightlogo.png"
-              alt="Student Housing logo"
-              width="400"
-              height="300"
-              className="mx-auto"
-            />
-
-            <p className="text-3xl font-medium text-gray-700">
-              Student Housing Management Platform
-            </p>
-          </header>
-
-          {/* Homepage cards */}
-          <div className="flex flex-wrap justify-center gap-4">
-
-            {/* Repairs box */}
-            <Link
-              href="/admin-dashboard/1/maintenance"
-              className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400"
-            >
-              <img
-                src="/images/repairs.png"
-                alt="Repairs and maintenance"
-                className="absolute inset-0 top-25 mx-auto h-25 w-25 object-contain opacity-75 transition-opacity group-hover:opacity-50"
-              />
-
-              <div className="relative p-4">
-                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-                  Repairs
-                </p>
-
-                <p className="text-xl text-white">
-                  Maintenance and Repairs
-                </p>
-
-                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  Fill in the form to report any maintenance requests or repairs which need to be addressed, and our team will promptly respond.
-                </p>
-              </div>
-            </Link>
-
-            {/* Cleaning box */}
-            <Link
-              href="/admin-dashboard/1/cleaning-schedule"
-              className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400"
-            >
-              <img
-                src="/images/cleaning.png"
-                alt="Cleaning schedule"
-                className="absolute inset-0 top-25 mx-auto h-30 w-30 object-contain opacity-75 transition-opacity group-hover:opacity-50"
-              />
-
-              <div className="relative p-4">
-                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-                  Cleaning
-                </p>
-
-                <p className="text-xl text-white">
-                  Cleaning Schedule
-                </p>
-
-                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  Schedule which flatmates are responsible for cleaning common areas and when.
-                </p>
-              </div>
-            </Link>
-
-            {/* Announcements box */}
-            <Link
-              href="/admin-dashboard/1/announcements"
-              className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400"
-            >
-              <img
-                src="/images/announcements.png"
-                alt="Announcements and events"
-                className="absolute inset-0 top-25 mx-auto h-30 w-30 object-contain opacity-75 transition-opacity group-hover:opacity-50"
-              />
-
-              <div className="relative p-4">
-                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-                  Information
-                </p>
-
-                <p className="text-xl text-white">
-                  Announcements and Events
-                </p>
-
-                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  View upcoming inspections, events, and important
-                  announcements related to your housing.
-                </p>
-              </div>
-            </Link>
-
-            {/* Shared Inventory box */}
-            <Link
-              href="/admin-dashboard/1/shared-inventory"
-              className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400"
-            >
-              <img
-                src="/images/inventory.png"
-                alt="Shared inventory"
-                className="absolute inset-0 top-25 mx-auto h-25 w-25 object-contain opacity-75 transition-opacity group-hover:opacity-50"
-              />
-
-              <div className="relative p-4">
-                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-                  Item management
-                </p>
-
-                <p className="text-xl text-white">
-                  Shared Inventory
-                </p>
-
-                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  View stock levels of shared items and add items to the
-                  shopping list if supplies are running low.
-                </p>
-              </div>
-            </Link>
-
-            {/* Shopping List box */}
-            <Link
-              href="/admin-dashboard/1/shopping-list"
-              className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400"
-            >
-              <img
-                src="/images/shopping.png"
-                alt="Shopping list"
-                className="absolute inset-0 top-25 mx-auto h-30 w-30 object-contain opacity-75 transition-opacity group-hover:opacity-50"
-              />
-
-              <div className="relative p-4">
-                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-                  Refurbishing supplies
-                </p>
-
-                <p className="text-xl text-white">
-                  Shopping List
-                </p>
-
-                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  View items that need replenishing and add new items
-                  to the shared shopping list.
-                </p>
-              </div>
-            </Link>
-
-            {/* Complaints box */}
-            <Link
-              href="/admin-dashboard/1/complaints"
-              className="group relative block h-60 w-60 overflow-hidden rounded-lg border-3 border-blue-900 bg-blue-400"
-            >
-              <img
-                src="/images/complaints.svg"
-                alt="Complaints"
-                className="absolute inset-0 top-25 mx-auto h-25 w-25 object-contain opacity-75 transition-opacity group-hover:opacity-50"
-              />
-
-              <div className="relative p-4">
-                <p className="text-sm font-medium tracking-widest text-blue-800 uppercase">
-                  Issues
-                </p>
-
-                <p className="text-xl text-white">
-                  Complaints
-                </p>
-
-                <p className="mt-4 translate-y-8 text-sm text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
-                  Report any issues with your flatmates or property.
-                </p>
-              </div>
-            </Link>
-          </div>
-        </main>
+      <div className="flex flex-wrap justify-center gap-6">
+        <ModuleCard
+          label="Properties"
+          title="Accommodations"
+          description="Find, add and open the houses and apartments you manage."
+          icon={Building2}
+          onClick={() => setOpen(true)}
+        />
+        <ModuleCard
+          label="People"
+          title="Users"
+          description="Create, update and remove tenants, staff and admins."
+          icon={Users}
+          href={`${base}/users`}
+        />
       </div>
-    </SidebarProvider>
+
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Accommodations"
+        description="Fill in the first row and press + to add an accommodation. Click a row to open it."
+        size="xl"
+      >
+        {open && <AccommodationsTable adminId={adminId} base={base} onNavigate={() => setOpen(false)} />}
+      </Modal>
+    </main>
+  );
+}
+
+function AccommodationsTable({ adminId, base, onNavigate }: { adminId: string; base: string; onNavigate: () => void }) {
+  const router = useRouter();
+  const load = useCallback(() => listHouses(adminId), [adminId]);
+  const { data, error, loading, reload } = useActionData(load);
+
+  const columns: Column<HouseRow>[] = [
+    {
+      key: "street",
+      header: "Street",
+      render: (row) => <span className="font-medium text-foreground">{row.street}</span>,
+      sortValue: (row) => row.street,
+      create: { name: "street", label: "Street", required: true },
+    },
+    {
+      key: "houseNumber",
+      header: "Number",
+      render: (row) => row.houseNumber,
+      sortValue: (row) => row.houseNumber,
+      create: { name: "houseNumber", label: "House number", placeholder: "12A", required: true },
+      className: "w-28",
+    },
+    {
+      key: "postalCode",
+      header: "Postal code",
+      render: (row) => row.postalCode,
+      sortValue: (row) => row.postalCode,
+      create: { name: "postalCode", label: "Postal code", placeholder: "5611 AB", required: true },
+      className: "w-32",
+    },
+    {
+      key: "city",
+      header: "City",
+      render: (row) => row.city,
+      sortValue: (row) => row.city,
+      create: { name: "city", label: "City", required: true },
+    },
+    {
+      key: "rooms",
+      header: "Rooms",
+      render: (row) => row.roomCount,
+      sortValue: (row) => row.roomCount,
+      className: "w-24",
+    },
+    {
+      key: "occupancy",
+      header: "Occupied",
+      render: (row) => (row.roomCount === 0 ? "—" : `${row.occupiedCount} / ${row.roomCount}`),
+      sortValue: (row) => (row.roomCount === 0 ? -1 : row.occupiedCount / row.roomCount),
+      className: "w-28",
+    },
+  ];
+
+  const cities = [...new Set((data ?? []).map((row) => row.city).filter(Boolean))].sort();
+
+  if (loading) return <p className="text-sm text-muted-foreground">Loading accommodations…</p>;
+  if (!data) return <p role="alert" className="text-sm text-red-700">{error}</p>;
+
+  return (
+    <>
+      {error && <p role="alert" className="mb-3 text-sm text-red-700">{error}</p>}
+      <DataTable
+        rows={data}
+        rowKey={(row) => row.id}
+        columns={columns}
+        searchText={(row) => `${row.street} ${row.houseNumber} ${row.postalCode} ${row.city}`}
+        searchPlaceholder="Search by street, number, postal code or city"
+        filters={[
+          {
+            key: "city",
+            label: "City",
+            options: cities.map((city) => ({ value: city, label: city })),
+            matches: (row, value) => row.city === value,
+          },
+          {
+            key: "occupancy",
+            label: "Occupancy",
+            options: [
+              { value: "vacant", label: "Has vacant rooms" },
+              { value: "full", label: "Fully occupied" },
+              { value: "empty", label: "No rooms yet" },
+            ],
+            matches: (row, value) =>
+              value === "empty"
+                ? row.roomCount === 0
+                : value === "full"
+                  ? row.roomCount > 0 && row.occupiedCount >= row.roomCount
+                  : row.occupiedCount < row.roomCount,
+          },
+        ]}
+        createLabel="Add accommodation"
+        onCreate={async (values) => {
+          const result = await createHouse(adminId, {
+            street: values.street,
+            houseNumber: values.houseNumber,
+            postalCode: values.postalCode,
+            city: values.city,
+          });
+          if (!result.ok) return result.error;
+          await reload();
+          return null;
+        }}
+        onRowClick={(row) => {
+          onNavigate();
+          router.push(`${base}/houses/${row.id}`);
+        }}
+        rowLabel={(row) => `Open ${row.street} ${row.houseNumber}, ${row.city}`}
+        emptyText="No accommodations yet. Add the first one in the row above."
+      />
+    </>
+  );
+}
+
+export default function AdminHomePage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminHome />
+    </Suspense>
   );
 }

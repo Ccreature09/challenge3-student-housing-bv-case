@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import {
   SidebarInset,
   SidebarProvider,
@@ -6,6 +7,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { SessionGuard } from "@/components/session-guard";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -26,7 +28,12 @@ export default function RootLayout({
           <Separator orientation="vertical" className="mr-2 h-4" />
           <h1 className="text-sm font-medium">Dashboard</h1>
         </header>
-        <div className="min-h-full flex flex-col font-sans">{children}</div>
+        <div className="min-h-full flex flex-col font-sans">
+          {/* Reads the URL, so it needs Suspense (cacheComponents is on). */}
+          <Suspense fallback={children}>
+            <SessionGuard>{children}</SessionGuard>
+          </Suspense>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
